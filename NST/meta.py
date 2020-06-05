@@ -13,5 +13,9 @@ imageStyle = imageStyle.resize(imageContext.size)
 
 #numpy image
 
-mainContext = np.array(imageContext)
-mainStyle = np.array(imageStyle)
+mainContext = np.array(imageContext,dtype = np.float32)
+mainStyle = np.array(imageStyle,dtype =  np.float32)
+
+joinedData = np.stack([mainContext,mainStyle])
+
+labels = np.array([x for x in range(joinedData.shape[0])])
