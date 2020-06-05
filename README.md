@@ -1,1 +1,1 @@
-# Neural Nets related to (excluding Reinforcement Learning)
+# Neural Nets Stuff (except RL)
