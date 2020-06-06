@@ -8,3 +8,4 @@ def implementParser():
     parser.add_argument('--style',
         dest = 'style', help = 'styles image', metavar = 'STYLE', required = True, nargs='+')
     
+#we need to figure out what all we wish to support and what all we don't. DO THAT !
