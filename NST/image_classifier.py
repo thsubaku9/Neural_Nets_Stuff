@@ -30,12 +30,12 @@ class ImageClassifier():
     def avg_pooling(self,inFeed,name):
         return tf.nn.avg_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1] ,padding = "SAME", name = name)
         
-    def flatten(self,layer):
+    def flatten(self, layer):
         return tf.reshape(layer,[1,-1])
     
-    def fullcon(self,layer,name,inputNeurons,outputNeurons):
-        W = tf.get_variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons)))
-        b = tf.get_variable(name = name, shape = (outputNeurons,), dtype = tf.float32, initial_value = tf.random.normal((outputNeurons,)))
+    def fullcon(self, layer, name, inputNeurons, outputNeurons):
+        W = tf.Variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons)))
+        b = tf.Variable(name = name, shape = (outputNeurons,), dtype = tf.float32, initial_value = tf.random.normal((outputNeurons,)))
 
         self.weights[name] = W
         self.biases[name] = b
@@ -115,14 +115,15 @@ class ImageClassifier():
         self.conv5_4 = self.conv_layer(self.conv5_3, weights["w5_4"], biases["b5_4"])
         self.pool5 = self.avg_pooling(self.conv5_4,"avg_pool2")
 
-        self.flat = flatten(self.pool5)
-        self.fc1 = fullcon(self.flat,"fc1",self.flat.shape[1],self.preOutputSize)
+        self.flat = self.flatten(self.pool5)        
+        
+        self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize)
         self.relu1 = tf.nn.relu(self.fc1)
 
-        self.fc2 = fullcon(self.relu1,"fc2",self.preOutputSize,self.totalClasses = totalClasses)
+        self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.totalClasses)
 
         self.classifier_result = tf.nn.softmax(self.fc2,name = "result")
-
+        
 
 #create loss value and optimizer and class compile function
         
