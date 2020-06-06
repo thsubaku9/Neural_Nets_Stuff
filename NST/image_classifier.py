@@ -16,7 +16,9 @@ class ImageClassifier():
         self.Label = Y
             
     def conv_layer(self, inFeed, tfFilter, bias):
-        convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = 'SAME')
+        #VALID -> ensures shrinking
+        #SAME -> ensures same dimension
+        convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = 'VALID')
         biased = tf.nn.bias_add(convolve, bias)
         return tf.nn.leaky_relu(biased, alpha = 0.3)
     
@@ -29,9 +31,9 @@ class ImageClassifier():
     def flatten(self,layer):
         return tf.reshape(layer,[1,-1])
     
-    def fullcon(self,layer,name):
-        W = tf.get_variable(name = name)
-        b = tf.get_variable(name = name)
+    def fullcon(self,layer,name,inputNeurons,outputNeurons):
+        W = tf.get_variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons)))
+        b = tf.get_variable(name = name, shape = (outputNeurons,), dtype = tf.float32, initial_value = tf.random.normal((outputNeurons,)))
 
         fc = tf.nn.bias_add(tf.matmul(layer,W),b)
         
@@ -58,8 +60,7 @@ class ImageClassifier():
             'w5_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_1'),
             'w5_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_2'),
             'w5_3': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_3'),
-            'w5_4': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_4'),
-            #'fc1': tf.Variable()
+            'w5_4': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_4'),        
             }
 
         biases = {
@@ -79,7 +80,6 @@ class ImageClassifier():
             'b5_2': tf.Variable(initial_value = tf.random.normal(shape = (512,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (512,), name = 'b5_2'),
             'b5_3': tf.Variable(initial_value = tf.random.normal(shape = (512,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (512,), name = 'b5_3'),
             'b5_4': tf.Variable(initial_value = tf.random.normal(shape = (512,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (512,), name = 'b5_4'),
-            #'fc1': tf.Variable()
             }
         
         self.conv1_1 = self.conv_layer(self.Img, weights["w1_1"], biases["b1_1"])
@@ -108,6 +108,6 @@ class ImageClassifier():
         self.conv5_4 = self.conv_layer(self.conv5_3, weights["w5_4"], biases["b5_4"])
         self.pool5 = self.avg_pooling(self.conv5_4,"avg_pool2")
         
-        self.fc1 = fullcon(flatten(self.pool5),"fc1")
+        self.fc1 = fullcon(flatten(self.pool5),"fc1",)
         self.relu1 = tf.nn.relu(self.fc1)
         
