@@ -7,8 +7,6 @@ tf.compat.v1.reset_default_graph()
 
 #init = tf.initialize_all_variables()
 
-sess = tf.Session()
-
 class ImageClassifier():
     #vgg19 is used here
     def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
@@ -16,6 +14,9 @@ class ImageClassifier():
         self.Label = Y
         self.totalClasses = totalClasses
         self.preOutputSize = preOutput
+
+        self.input = tf.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
+        self.output = tf.placeholder(dtype = tf.float32, shape = (None,self.Label.shape[1]))
             
     def conv_layer(self, inFeed, tfFilter, bias):
         #VALID -> ensures shrinking
@@ -31,7 +32,12 @@ class ImageClassifier():
         return tf.nn.avg_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1] ,padding = "SAME", name = name)
         
     def flatten(self, layer):
-        return tf.reshape(layer,[1,-1])
+        
+        ln = len(layer.shape)
+        totalNeurons = 1
+        for i in range(1,ln):
+            totalNeurons*=layer.shape[i].value
+        return tf.reshape(layer,[-1,totalNeurons])
     
     def fullcon(self, layer, name, inputNeurons, outputNeurons):
         W = tf.Variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons)))
@@ -89,7 +95,7 @@ class ImageClassifier():
 
         self.weights = weights; self.biases = biases;
         
-        self.conv1_1 = self.conv_layer(self.Img, weights["w1_1"], biases["b1_1"])
+        self.conv1_1 = self.conv_layer(self.input, weights["w1_1"], biases["b1_1"])
         self.conv1_2 = self.conv_layer(self.conv1_1, weights["w1_2"], biases["b1_2"])
         self.pool1 = self.max_pooling(self.conv1_2,"max_pool1")
 
@@ -116,14 +122,27 @@ class ImageClassifier():
         self.pool5 = self.avg_pooling(self.conv5_4,"avg_pool2")
 
         self.flat = self.flatten(self.pool5)        
-        
+
+                
         self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize)
         self.relu1 = tf.nn.relu(self.fc1)
 
         self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.totalClasses)
-
-        self.classifier_result = tf.nn.softmax(self.fc2,name = "result")
+        self.classifierOutput = tf.nn.softmax(self.fc2,name = "result")
         
+        return self.classifierOutput
+
+    def loss(self,logits):
+        
+        return tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits)
+
+    def train(self):
+
+        sess = tf.Session()
+        
+        return 0
+
+        #optimizer type ?
 
 #create loss value and optimizer and class compile function
         

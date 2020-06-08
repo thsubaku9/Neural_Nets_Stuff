@@ -19,3 +19,14 @@ mainStyle = np.array(imageStyle,dtype =  np.float32)
 joinedData = np.stack([mainContext,mainStyle])
 
 labels = np.array([x for x in range(joinedData.shape[0])])
+
+labelsOneHot = np.identity(labels.shape[0])
+
+
+#create classifier
+#create context loss
+#create style loss
+#assign weights
+#create Generated image
+#minimize total loss
+#done
