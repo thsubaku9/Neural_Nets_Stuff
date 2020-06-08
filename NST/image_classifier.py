@@ -5,11 +5,10 @@ import meta
 
 tf.compat.v1.reset_default_graph()
 
-#init = tf.initialize_all_variables()
-
 class ImageClassifier():
     #vgg19 is used here
-    def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
+    def __init__(self, X, Y, totalClasses = 2, preOutput = 2000,):
+        self.learn_rate = 0.001
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -17,6 +16,13 @@ class ImageClassifier():
 
         self.input = tf.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
         self.output = tf.placeholder(dtype = tf.float32, shape = (None,self.Label.shape[1]))
+
+    # add names to layer later to get style and context loss
+
+    def set_learning_rate(self,lr):
+        if(lr >0 and lr <1):
+            self.learn_rate = lr
+
             
     def conv_layer(self, inFeed, tfFilter, bias):
         #VALID -> ensures shrinking
@@ -122,7 +128,6 @@ class ImageClassifier():
         self.pool5 = self.avg_pooling(self.conv5_4,"avg_pool2")
 
         self.flat = self.flatten(self.pool5)        
-
                 
         self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize)
         self.relu1 = tf.nn.relu(self.fc1)
@@ -132,17 +137,47 @@ class ImageClassifier():
         
         return self.classifierOutput
 
-    def loss(self,logits):
+    def optimize(self,logits):
         
-        return tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits)
+        classifier_acc = tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits)
+        loss = tf.reduce_mean(classifier_acc)
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate).minimize(loss)
+        
 
     def train(self):
 
-        sess = tf.Session()
+        init = tf.initialize_all_variables()
+        sess = tf.Session()            
         
-        return 0
+'''
+with tf.Session() as sess:
+    sess.run(init) 
+    train_loss = []
+    test_loss = []
+    train_accuracy = []
+    test_accuracy = []
+    summary_writer = tf.summary.FileWriter('./Output', sess.graph)
+    for i in range(training_iters):
+        for batch in range(len(train_X)//batch_size):
+            batch_x = train_X[batch*batch_size:min((batch+1)*batch_size,len(train_X))]
+            batch_y = train_y[batch*batch_size:min((batch+1)*batch_size,len(train_y))]    
+            # Run optimization op (backprop).
+                # Calculate batch loss and accuracy
+            opt = sess.run(optimizer, feed_dict={x: batch_x,
+                                                              y: batch_y})
+            loss, acc = sess.run([cost, accuracy], feed_dict={x: batch_x,
+                                                              y: batch_y})
+        print("Iter " + str(i) + ", Loss= " + \
+                      "{:.6f}".format(loss) + ", Training Accuracy= " + \
+                      "{:.5f}".format(acc))
+        print("Optimization Finished!")
 
-        #optimizer type ?
-
-#create loss value and optimizer and class compile function
-        
+        # Calculate accuracy for all 10000 mnist test images
+        test_acc,valid_loss = sess.run([accuracy,cost], feed_dict={x: test_X,y : test_y})
+        train_loss.append(loss)
+        test_loss.append(valid_loss)
+        train_accuracy.append(acc)
+        test_accuracy.append(test_acc)
+        print("Testing Accuracy:","{:.5f}".format(test_acc))
+    summary_writer.close()
+'''
