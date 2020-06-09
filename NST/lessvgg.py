@@ -1,65 +1,22 @@
-#currently unfinished
+#classless vgg19
 
 import tensorflow as tf
 import meta
 
 tf.compat.v1.reset_default_graph()
 
-class ImageClassifier():
-    #vgg19 is used here
-    def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
-        self.learn_rate = 0.001
-        self.Img = X
-        self.Label = Y
-        self.totalClasses = totalClasses
-        self.preOutputSize = preOutput
+learn_rate = 0.001
 
-        self.input = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
-        self.output = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Label.shape[1]))
+Img = meta.joinedData
+Label = meta.labelsOneHot
+totalClasses = 2
+preOutputSize = 2000
 
-    # add names to layers later to get style and context loss
+input = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,Img.shape[1],Img.shape[2],Img.shape[3]))
+output = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,Label.shape[1]))
 
-    def set_learning_rate(self,lr):
-        if(lr >0 and lr <1):
-            self.learn_rate = lr
-            
-    def conv_layer(self, inFeed, tfFilter, bias):
-        #VALID -> ensures shrinking
-        #SAME -> ensures same dimension
-        convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = 'VALID')
-        biased = tf.nn.bias_add(convolve, bias)
-        return tf.nn.leaky_relu(biased, alpha = 0.3)
-    
-    def max_pooling(self,inFeed,name):
-        return tf.nn.max_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1], padding = "SAME", name = name)
-    
-    def avg_pooling(self,inFeed,name):
-        return tf.nn.avg_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1] ,padding = "SAME", name = name)
-        
-    def flatten(self, layer):        
-        ln = len(layer.shape)
-        totalNeurons = 1
-        for i in range(1,ln):
-            totalNeurons*=layer.shape[i].value
-        return tf.reshape(layer,[-1,totalNeurons])
-    
-    def fullcon(self, layer, name, inputNeurons, outputNeurons):
-        W = tf.Variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons)))
-        b = tf.Variable(name = name, shape = (outputNeurons,), dtype = tf.float32, initial_value = tf.random.normal((outputNeurons,)))
 
-        self.weights[name] = W
-        self.biases[name] = b
-        
-        fc = tf.nn.bias_add(tf.matmul(layer,W),b)
-        
-        return fc
-        
-    def build(self):
-
-        # image has 3 layers, first output is 64 layers
-        # second input has 64 layers, second output is 64 layers
-        # so on and so forth
-        weights = {
+weights = {
             'w1_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,3,64]),dtype = tf.float32,shape = [3,3,3,64], name = 'w1_1'),
             'w1_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,64,64]),dtype = tf.float32,shape = [3,3,64,64], name = 'w1_2'),
             'w2_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,64,128]),dtype = tf.float32,shape = [3,3,64,128], name = 'w2_1'),
@@ -78,7 +35,7 @@ class ImageClassifier():
             'w5_4': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_4'),        
             }
 
-        biases = {
+biases = {    
             'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (64,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (64,), name = 'b1_1'),
             'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (64,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (64,), name = 'b1_2'),
             'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (128,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (128,), name = 'b2_1'),
@@ -97,59 +54,89 @@ class ImageClassifier():
             'b5_4': tf.Variable(initial_value = tf.random.normal(shape = (512,), mean = 0.0, stddev = 1.5), dtype = tf.float32,shape = (512,), name = 'b5_4'),
             }
 
-        self.weights = weights; self.biases = biases;
-        
-        self.conv1_1 = self.conv_layer(self.input, weights["w1_1"], biases["b1_1"])
-        self.conv1_2 = self.conv_layer(self.conv1_1, weights["w1_2"], biases["b1_2"])
-        self.pool1 = self.max_pooling(self.conv1_2,"max_pool1")
+def set_learning_rate(lr):
+    if(lr >0 and lr <1):
+        learn_rate = lr
+    
+def conv_layer( inFeed, tfFilter, bias):
+    #VALID -> ensures shrinking
+    #SAME -> ensures same dimension
+    convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = 'VALID')
+    biased = tf.nn.bias_add(convolve, bias)
+    return tf.nn.leaky_relu(biased, alpha = 0.3)
 
-        self.conv2_1 = self.conv_layer(self.pool1, weights["w2_1"], biases["b2_1"])
-        self.conv2_2 = self.conv_layer(self.conv2_1, weights["w2_2"], biases["b2_2"])
-        self.pool2 = self.max_pooling(self.conv2_2,"max_pool2")
+def max_pooling(inFeed,name):
+    return tf.nn.max_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1], padding = "SAME", name = name)
 
-        self.conv3_1 = self.conv_layer(self.pool2, weights["w3_1"], biases["b3_1"]) 
-        self.conv3_2 = self.conv_layer(self.conv3_1, weights["w3_2"], biases["b3_2"])
-        self.conv3_3 = self.conv_layer(self.conv3_2, weights["w3_3"], biases["b3_3"])
-        self.conv3_4 = self.conv_layer(self.conv3_3, weights["w3_4"], biases["b3_4"])
-        self.pool3 = self.max_pooling(self.conv3_4,"max_pool3")
-        
-        self.conv4_1 = self.conv_layer(self.pool3, weights["w4_1"], biases["b4_1"])
-        self.conv4_2 = self.conv_layer(self.conv4_1, weights["w4_2"], biases["b4_2"])
-        self.conv4_3 = self.conv_layer(self.conv4_2, weights["w4_3"], biases["b4_3"])
-        self.conv4_4 = self.conv_layer(self.conv4_3, weights["w4_4"], biases["b4_4"])
-        self.pool4 = self.avg_pooling(self.conv4_4,"avg_pool1")
+def avg_pooling(inFeed,name):
+    return tf.nn.avg_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1] ,padding = "SAME", name = name)
+	
+def flatten( layer):
+    ln = len(layer.shape)
+    totalNeurons = 1
+    for i in range(1,ln):        
+        totalNeurons*=layer.shape[i].value
+    return tf.reshape(layer,[-1,totalNeurons])
 
-        self.conv5_1 = self.conv_layer(self.pool4, weights["w5_1"], biases["b5_1"])
-        self.conv5_2 = self.conv_layer(self.conv5_1, weights["w5_2"], biases["b5_2"])
-        self.conv5_3 = self.conv_layer(self.conv5_2, weights["w5_3"], biases["b5_3"])
-        self.conv5_4 = self.conv_layer(self.conv5_3, weights["w5_4"], biases["b5_4"])
-        self.pool5 = self.avg_pooling(self.conv5_4,"avg_pool2")
+def fullcon( layer, name, inputNeurons, outputNeurons):
+    W = tf.Variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons)))
+    b = tf.Variable(name = name, shape = (outputNeurons,), dtype = tf.float32, initial_value = tf.random.normal((outputNeurons,)))
+    weights[name] = W
+    biases[name] = b	
+    fc = tf.nn.bias_add(tf.matmul(layer,W),b)
+    return fc
 
-        self.flat = self.flatten(self.pool5)        
-                
-        self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize)
-        self.relu1 = tf.nn.relu(self.fc1)
+def build():
+    conv1_1 = conv_layer(input, weights["w1_1"], biases["b1_1"])
+    conv1_2 = conv_layer(conv1_1, weights["w1_2"], biases["b1_2"])
+    pool1 = max_pooling(conv1_2,"max_pool1")
+    
+    conv2_1 = conv_layer(pool1, weights["w2_1"], biases["b2_1"])
+    conv2_2 = conv_layer(conv2_1, weights["w2_2"], biases["b2_2"])
+    pool2 = max_pooling(conv2_2,"max_pool2")
+    
+    conv3_1 = conv_layer(pool2, weights["w3_1"], biases["b3_1"]) 
+    conv3_2 = conv_layer(conv3_1, weights["w3_2"], biases["b3_2"])
+    conv3_3 = conv_layer(conv3_2, weights["w3_3"], biases["b3_3"])
+    conv3_4 = conv_layer(conv3_3, weights["w3_4"], biases["b3_4"])
+    pool3 = max_pooling(conv3_4,"max_pool3")
+    
+    conv4_1 = conv_layer(pool3, weights["w4_1"], biases["b4_1"])
+    conv4_2 = conv_layer(conv4_1, weights["w4_2"], biases["b4_2"])
+    conv4_3 = conv_layer(conv4_2, weights["w4_3"], biases["b4_3"])
+    conv4_4 = conv_layer(conv4_3, weights["w4_4"], biases["b4_4"])
+    pool4 = avg_pooling(conv4_4,"avg_pool1")
+    
+    conv5_1 = conv_layer(pool4, weights["w5_1"], biases["b5_1"])
+    conv5_2 = conv_layer(conv5_1, weights["w5_2"], biases["b5_2"])
+    conv5_3 = conv_layer(conv5_2, weights["w5_3"], biases["b5_3"])
+    conv5_4 = conv_layer(conv5_3, weights["w5_4"], biases["b5_4"])
+    pool5 = avg_pooling(conv5_4,"avg_pool2")
+    
+    flat = flatten(pool5)        
+    fc1 = fullcon(flat,"fc1",flat.shape[1].value,preOutputSize)
+    relu1 = tf.nn.relu(fc1)
+    fc2 = fullcon(relu1,"fc2",preOutputSize,totalClasses)
+    classifierOutput = tf.nn.softmax(fc2,name = "result")
 
-        self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.totalClasses)
-        self.classifierOutput = tf.nn.softmax(self.fc2,name = "result")
-        
-        return self.classifierOutput
+    return classifierOutput
 
-    def optimize(self,logits):
-        
-        entropy_loss = tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits)
-        cost = tf.reduce_mean(entropy_loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate).minimize(cost)
+def optimize(logits):
+    entropy_loss = tf.nn.softmax_cross_entropy_with_logits(labels = output, logits = logits)
+    cost = tf.reduce_mean(entropy_loss)
+    optimizer = tf.train.AdamOptimizer(learning_rate = learn_rate).minimize(cost)
+    correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(output,1))
+    acc = tf.reduce_mean(tf.cast(correct_pred,tf.float32))
+    return cost,optimizer,acc
 
-        correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(self.output,1))
-        acc = tf.reduce_mean(tf.cast(correct_pred,tf.float32))
 
-        return cost,optimizer,acc
 
-    def train(self,iters = 100,batches = None):
+'''
 
-        classifier = self.build()
-        cost,optimizer,accuracy = self.optimize(classifier)
+    def train(iters = 100,batches = None):
+
+        classifier = build()
+        cost,optimizer,accuracy = optimize(classifier)
         
         init = tf.global_variables_initializer()
 
@@ -159,17 +146,18 @@ class ImageClassifier():
             sess.run(init)            
             for it in range(iters):
                 if(batches == None):
-                    batch_x = self.Img
-                    batch_y = self.Label
-                    self.run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)                    
+                    batch_x = Img
+                    batch_y = Label
+                    run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)                    
                 else:
-                    for batch_pointer in range(len(self.Img)//batches):                        
-                        batch_x = self.Img[batch_pointer*batches:min((batch_pointer+1)*batches,len(self.Img))]
-                        batch_y = self.Label[batch_pointer*batches:min((batch_pointer+1)*batches,len(self.Label))]
-                        self.run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)
+                    for batch_pointer in range(len(Img)//batches):                        
+                        batch_x = Img[batch_pointer*batches:min((batch_pointer+1)*batches,len(Img))]
+                        batch_y = Label[batch_pointer*batches:min((batch_pointer+1)*batches,len(Label))]
+                        run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)
                     
-    def run_compute(self,sess,feed_x,feed_y,cost,optimizer,accuracy):
+    def run_compute(sess,feed_x,feed_y,cost,optimizer,accuracy):
         opt = sess.run(optimizer,feed_dict={x: feed_x, y: feed_y})
         loss,acc = sess.run([cost,accuracy],feed_dict={x: feed_x, y: feed_y})
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
 
+'''

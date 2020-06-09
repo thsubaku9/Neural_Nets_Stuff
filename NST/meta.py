@@ -1,6 +1,6 @@
 from PIL import Image
 import numpy as np
-import image_classifier as vgg19
+#import image_classifier as vgg19
 
 filePath = 'D:/Documents/gitWork/NNStuff/Neural_Nets_Stuff/NST'
 pathContext = filePath + '/Context.jpg'
