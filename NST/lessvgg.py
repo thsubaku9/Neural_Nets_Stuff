@@ -17,22 +17,22 @@ output = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,Label.shape[
 
 
 weights = {
-            'w1_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,3,64]),dtype = tf.float32,shape = [3,3,3,64], name = 'w1_1'),
-            'w1_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,64,64]),dtype = tf.float32,shape = [3,3,64,64], name = 'w1_2'),
-            'w2_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,64,128]),dtype = tf.float32,shape = [3,3,64,128], name = 'w2_1'),
-            'w2_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,128,128]),dtype = tf.float32,shape = [3,3,128,128], name = 'w2_2'),
-            'w3_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,128,256]),dtype = tf.float32,shape = [3,3,128,256], name = 'w3_1'),
-            'w3_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,256,256]),dtype = tf.float32,shape = [3,3,256,256], name = 'w3_2'),
-            'w3_3': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,256,256]),dtype = tf.float32,shape = [3,3,256,256], name = 'w3_3'),
-            'w3_4': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,256,256]),dtype = tf.float32,shape = [3,3,256,256], name = 'w3_4'),
-            'w4_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,256,512]),dtype = tf.float32,shape = [3,3,256,512], name = 'w4_1'),
-            'w4_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w4_2'),
-            'w4_3': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w4_3'),
-            'w4_4': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w4_4'),
-            'w5_1': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_1'),
-            'w5_2': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_2'),
-            'w5_3': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_3'),
-            'w5_4': tf.Variable(initial_value = tf.contrib.layers.xavier_initializer(seed=0)([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_4'),        
+            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,3,64]),dtype = tf.float32,shape = [3,3,3,64], name = 'w1_1'),
+            'w1_2': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,64,64]),dtype = tf.float32,shape = [3,3,64,64], name = 'w1_2'),
+            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,64,128]),dtype = tf.float32,shape = [3,3,64,128], name = 'w2_1'),
+            'w2_2': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,128,128]),dtype = tf.float32,shape = [3,3,128,128], name = 'w2_2'),
+            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,128,256]),dtype = tf.float32,shape = [3,3,128,256], name = 'w3_1'),
+            'w3_2': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,256,256]),dtype = tf.float32,shape = [3,3,256,256], name = 'w3_2'),
+            'w3_3': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,256,256]),dtype = tf.float32,shape = [3,3,256,256], name = 'w3_3'),
+            'w3_4': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,256,256]),dtype = tf.float32,shape = [3,3,256,256], name = 'w3_4'),
+            'w4_1': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,256,512]),dtype = tf.float32,shape = [3,3,256,512], name = 'w4_1'),
+            'w4_2': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w4_2'),
+            'w4_3': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w4_3'),
+            'w4_4': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w4_4'),
+            'w5_1': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_1'),
+            'w5_2': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_2'),
+            'w5_3': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_3'),
+            'w5_4': tf.Variable(initial_value = tf.truncated_normal_initializer()([3,3,512,512]),dtype = tf.float32,shape = [3,3,512,512], name = 'w5_4'),        
             }
 
 biases = {    
@@ -113,7 +113,7 @@ def build():
     conv5_4 = conv_layer(conv5_3, weights["w5_4"], biases["b5_4"])
     pool5 = avg_pooling(conv5_4,"avg_pool2")
     
-    flat = flatten(pool5)        
+    flat = flatten(pool5)
     fc1 = fullcon(flat,"fc1",flat.shape[1].value,preOutputSize)
     relu1 = tf.nn.relu(fc1)
     fc2 = fullcon(relu1,"fc2",preOutputSize,totalClasses)
@@ -122,42 +122,32 @@ def build():
     return classifierOutput
 
 def optimize(logits):
-    entropy_loss = tf.nn.softmax_cross_entropy_with_logits(labels = output, logits = logits)
+    entropy_loss = tf.nn.softmax_cross_entropy_with_logits_v2(labels = output, logits = logits)
     cost = tf.reduce_mean(entropy_loss)
     optimizer = tf.train.AdamOptimizer(learning_rate = learn_rate).minimize(cost)
     correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(output,1))
     acc = tf.reduce_mean(tf.cast(correct_pred,tf.float32))
     return cost,optimizer,acc
 
-
-
-'''
-
-    def train(iters = 100,batches = None):
-
-        classifier = build()
-        cost,optimizer,accuracy = optimize(classifier)
-        
-        init = tf.global_variables_initializer()
-
-        with tf.Session() as sess:
-            print("Starting Session\n")
-            
-            sess.run(init)            
-            for it in range(iters):
-                if(batches == None):
-                    batch_x = Img
-                    batch_y = Label
-                    run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)                    
-                else:
-                    for batch_pointer in range(len(Img)//batches):                        
-                        batch_x = Img[batch_pointer*batches:min((batch_pointer+1)*batches,len(Img))]
-                        batch_y = Label[batch_pointer*batches:min((batch_pointer+1)*batches,len(Label))]
-                        run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)
+def train(iters = 100,batches = None):
+    classifier = build()
+    cost,optimizer,accuracy = optimize(classifier)
+    init = tf.global_variables_initializer()
+    with tf.Session() as sess:        
+        print("Starting Session\n")            
+        sess.run(init)
+        for it in range(iters):
+            if(batches == None):
+                batch_x = Img
+                batch_y = Label
+                run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)                    
+            else:
+                for batch_pointer in range(len(Img)//batches):
+                    batch_x = Img[batch_pointer*batches:min((batch_pointer+1)*batches,len(Img))]
+                    batch_y = Label[batch_pointer*batches:min((batch_pointer+1)*batches,len(Label))]
+                    run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)
                     
-    def run_compute(sess,feed_x,feed_y,cost,optimizer,accuracy):
-        opt = sess.run(optimizer,feed_dict={x: feed_x, y: feed_y})
-        loss,acc = sess.run([cost,accuracy],feed_dict={x: feed_x, y: feed_y})
-        print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
-
-'''
+def run_compute(sess,feed_x,feed_y,cost,optimizer,accuracy):
+    opt = sess.run(optimizer,feed_dict={input: feed_x, output: feed_y})
+    loss,acc = sess.run([cost,accuracy],feed_dict={input: feed_x, output: feed_y})
+    print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))

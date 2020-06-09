@@ -1,6 +1,5 @@
 from PIL import Image
 import numpy as np
-#import image_classifier as vgg19
 
 filePath = 'D:/Documents/gitWork/NNStuff/Neural_Nets_Stuff/NST'
 pathContext = filePath + '/Context.jpg'
@@ -18,6 +17,7 @@ mainContext = np.array(imageContext,dtype = np.float32)
 mainStyle = np.array(imageStyle,dtype =  np.float32)
 
 joinedData = np.stack([mainContext,mainStyle])
+joinedData = (joinedData - 127)/128
 
 labels = np.array([x for x in range(joinedData.shape[0])])
 

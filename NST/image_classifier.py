@@ -125,7 +125,7 @@ class ImageClassifier():
         self.conv5_4 = self.conv_layer(self.conv5_3, weights["w5_4"], biases["b5_4"])
         self.pool5 = self.avg_pooling(self.conv5_4,"avg_pool2")
 
-        self.flat = self.flatten(self.pool5)        
+        self.flat = self.flatten(self.pool5)
                 
         self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize)
         self.relu1 = tf.nn.relu(self.fc1)
@@ -169,7 +169,7 @@ class ImageClassifier():
                         self.run_compute(sess,batch_x,batch_y,cost,optimizer,accuracy)
                     
     def run_compute(self,sess,feed_x,feed_y,cost,optimizer,accuracy):
-        opt = sess.run(optimizer,feed_dict={x: feed_x, y: feed_y})
-        loss,acc = sess.run([cost,accuracy],feed_dict={x: feed_x, y: feed_y})
+        opt = sess.run(optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
+        loss,acc = sess.run([cost,accuracy],feed_dict={self.input: feed_x, self.output: feed_y})
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
 
