@@ -17,7 +17,7 @@ mainContext = np.array(imageContext,dtype = np.float32)
 mainStyle = np.array(imageStyle,dtype =  np.float32)
 
 joinedData = np.stack([mainContext,mainStyle])
-joinedData = (joinedData - 127)/128
+joinedData = (joinedData)/ 255
 
 labels = np.array([x for x in range(joinedData.shape[0])])
 

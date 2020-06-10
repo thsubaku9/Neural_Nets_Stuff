@@ -12,7 +12,8 @@ class miniClassifier():
         self.Label = Y
         self.totalClasses = totalClasses
         self.preOutputSize = preOutput
-
+        
+        self.save_path = None
         self.sess = None
 
         self.input = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
@@ -127,4 +128,23 @@ class miniClassifier():
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
         loss,acc = self.sess.run([self.cost, self.accuracy],feed_dict={self.input: feed_x, self.output: feed_y})
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
+
+    def oneshot_save(self, lowestLoss, currentLoss):
+        if((prevLoss == None) or (lowestLoss >= currLoss -0.1):
+           return lowestLoss 
+        else:
+           self.save_model(self)
+           return currentLoss
+        
+    def save_model(self,_path = "/tmp/model.ckpt"):
+        saver = tf.train.Saver()
+        self.save_path = saver.save(self.sess, _path)
+
+    def load_model(self,_path = "/tmp/model.ckpt"):
+        #get_variable to be utilized before trying to attempt below portion#
+        
+        saver = tf.train.Saver()
+        
+        saver.restore(self.sess, "/tmp/model.ckpt")
+        
 #cls = miniClassifier(meta.joinedData,meta.labelsOneHot)
