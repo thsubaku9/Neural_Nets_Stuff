@@ -8,7 +8,7 @@ tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 2, preOutput = 300):
-        self.learn_rate = 0.0001
+        self.learn_rate = 0.001
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -16,7 +16,8 @@ class miniClassifier():
         
         self.save_path = None
         self.sess = None
-
+        self.retrieveLayers = {}
+        
         self.input = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
         self.output = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Label.shape[1]))
 
@@ -93,8 +94,8 @@ class miniClassifier():
 
     def optimize(self,logits):        
         entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits_v2(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
-        cost = tf.reduce_mean(entropy_loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate).minimize(cost)
+        cost = tf.reduce_mean(entropy_loss)        
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.3, beta2 = 0.8).minimize(cost)
         
         correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(self.output,1))
         acc = tf.reduce_mean(tf.cast(correct_pred,tf.float32))
@@ -129,6 +130,7 @@ class miniClassifier():
             self.oneshot_save(startingLoss,currentLoss)
             if(it % 20 == 0):
                     self.learn_rate = self.learn_rate / (1+ 0.1*it)
+            startingLoss = min(startingLoss,currentLoss)
                     
     def run_compute(self,feed_x,feed_y):
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
@@ -137,24 +139,38 @@ class miniClassifier():
         return loss
 
     def oneshot_save(self, lowestLoss, currentLoss):        
-        if (lowestLoss >= currentLoss -0.1) :
-            return lowestLoss    
-        else:
-            self.save_model(self)
+        if (currentLoss == np.inf or lowestLoss == np.inf or currentLoss < (lowestLoss - 0.1)):
+            #print("current: {} lowest: {}\n".format(currentLoss, lowestLoss))
+            
+            self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
+            self.retrieveLayers['style2'] = self.sess.run(self.pool2, feed_dict={self.input: self.Img })#, self.output: self.Label})
+            self.retrieveLayers['contextpreout'] = self.sess.run(self.sig1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
+            
+            print('Value saved\n')
+            #self.save_model()
+            
             return currentLoss
-
+            #feed_dict={self.input: feed_x, self.output: feed_y}
+            
+        else:
+            #print('OUCH : {}'.format(lowestLoss))
+            return lowestLoss    
+            
     def save_model(self,_path = "/tmp/model.ckpt"):
         saver = tf.train.Saver()
         self.save_path = saver.save(self.sess, _path)
 
-    def load_model(self,_path = "/tmp/model.ckpt"):
-        Layers = {}
-        conv1_1 = tf.get_variable('conv1_1',shape = [3,3,3,5])
-        conv2_1 = tf.get_variable('conv2_1',shape = [3,3,5,10])
-        #context = tf.get_variable('context_layer',shape = [])
+    def load_model(self,component_name, component_shape, _path = "/tmp/model.ckpt"):
         
+        retrieved_component = tf.get_variable(component_name ,shape = component_shape)                    
         #get_variable to be utilized before trying to attempt below portion#
         saver = tf.train.Saver()
         saver.restore(self.sess, "/tmp/model.ckpt")
+
+        return retrieved_component
         
-#classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
+#HIDE this before release
+classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
+classifier.train_init()
+classifier.compile(100)
+#HIDE
