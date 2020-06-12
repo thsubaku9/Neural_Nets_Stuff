@@ -1,7 +1,6 @@
 #miniClassifier (for poor mans laptop)
 
 import tensorflow as tf
-import meta
 import numpy as np
 
 tf.compat.v1.reset_default_graph()
@@ -115,6 +114,7 @@ class miniClassifier():
     def compile(self,iters = 150,batches = None):
         startingLoss = np.inf
         currentLoss = np.inf
+        bestIter = 0
         for it in range(iters):
             if(batches == None):
                 batch_x = self.Img
@@ -127,10 +127,12 @@ class miniClassifier():
                     batch_y = self.Label[batch_pointer*batches:min((batch_pointer+1)*batches,len(self.Label))]
                     intermid_sum += self.run_compute(batch_x,batch_y)
                 currentLoss /= batches
-            self.oneshot_save(startingLoss,currentLoss)
+            update = self.oneshot_save(startingLoss, currentLoss, bestIter, it)    
+            if(update):
+                startingLoss = min(startingLoss,currentLoss)
+                bestIter = it
             if(it % 20 == 0):
                     self.learn_rate = self.learn_rate / (1+ 0.1*it)
-            startingLoss = min(startingLoss,currentLoss)
                     
     def run_compute(self,feed_x,feed_y):
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
@@ -138,8 +140,8 @@ class miniClassifier():
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
         return loss
 
-    def oneshot_save(self, lowestLoss, currentLoss):        
-        if (currentLoss == np.inf or lowestLoss == np.inf or currentLoss < (lowestLoss - 0.1)):
+    def oneshot_save(self, lowestLoss, currentLoss, lowestIter, currentIter):        
+        if (currentLoss == np.inf or lowestLoss == np.inf or currentLoss < (lowestLoss - 0.1) or ((currentLoss - lowestLoss)/(currentIter - lowestIter))<0.005 ) :
             #print("current: {} lowest: {}\n".format(currentLoss, lowestLoss))
             
             self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
@@ -149,12 +151,12 @@ class miniClassifier():
             print('Value saved\n')
             #self.save_model()
             
-            return currentLoss
+            return True
             #feed_dict={self.input: feed_x, self.output: feed_y}
             
         else:
             #print('OUCH : {}'.format(lowestLoss))
-            return lowestLoss    
+            return False
             
     def save_model(self,_path = "/tmp/model.ckpt"):
         saver = tf.train.Saver()
@@ -170,7 +172,9 @@ class miniClassifier():
         return retrieved_component
         
 #HIDE this before release
+'''
 classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
 classifier.train_init()
 classifier.compile(100)
+'''
 #HIDE
