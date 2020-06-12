@@ -2,29 +2,29 @@ from PIL import Image
 import numpy as np
 
 filePath = 'D:/Documents/gitWork/NNStuff/Neural_Nets_Stuff/NST'
-pathContext = filePath + '/Context.jpg'
+pathContent = filePath + '/Content.jpg'
 pathStyle = filePath + '/Style.jpg'
 
-imageContext = Image.open(pathContext)
+imageContent = Image.open(pathContent)
 imageStyle = Image.open(pathStyle)
 
 #matching scales
-imageStyle = imageStyle.resize(imageContext.size)
+imageStyle = imageStyle.resize(imageContent.size)
 #numpy image
 
-mainContext = np.array(imageContext,dtype = np.float32)
+mainContent = np.array(imageContent,dtype = np.float32)
 mainStyle = np.array(imageStyle,dtype =  np.float32)
 
 transpose_order = [1,0]
-if (mainContext.shape[2]>1):
+if (mainContent.shape[2]>1):
     transpose_order += [2]
 
-mainContext = mainContext.transpose(transpose_order)
+mainContent = mainContent.transpose(transpose_order)
 mainStyle = mainStyle.transpose(transpose_order)
 
-shapeImg = mainContext.shape
+shapeImg = mainContent.shape
 
-joinedData = np.stack([mainContext,mainStyle])
+joinedData = np.stack([mainContent,mainStyle])
 joinedData = (joinedData)/ 255
 
 labels = np.array([x for x in range(joinedData.shape[0])])

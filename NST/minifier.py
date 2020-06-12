@@ -85,7 +85,7 @@ class miniClassifier():
         self.relu1 = tf.nn.relu(self.fc1)
 
         self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.preOutputSize//2 , keep_prob = 0.8)
-        self.sig1 = tf.nn.sigmoid(self.fc2 , name = "context_layer")
+        self.sig1 = tf.nn.sigmoid(self.fc2 , name = "content_layer")
         self.fc3 = self.fullcon(self.sig1,"fc3",self.preOutputSize//2,self.totalClasses,keep_prob = 1.0)
         self.classifierOutput = tf.nn.softmax(self.fc3,name = "result")
 
@@ -146,14 +146,12 @@ class miniClassifier():
             
             self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
             self.retrieveLayers['style2'] = self.sess.run(self.pool2, feed_dict={self.input: self.Img })#, self.output: self.Label})
-            self.retrieveLayers['contextpreout'] = self.sess.run(self.sig1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
+            self.retrieveLayers['contentpreout'] = self.sess.run(self.sig1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
             
             print('Value saved\n')
-            #self.save_model()
-            
+            #self.save_model()            
             return True
-            #feed_dict={self.input: feed_x, self.output: feed_y}
-            
+        
         else:
             #print('OUCH : {}'.format(lowestLoss))
             return False
