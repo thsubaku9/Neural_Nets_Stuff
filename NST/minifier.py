@@ -6,7 +6,7 @@ import numpy as np
 tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
-    def __init__(self, X, Y, totalClasses = 2, preOutput = 300):
+    def __init__(self, X, Y, totalClasses = 2, preOutput = 3000):
         self.learn_rate = 0.001
         self.Img = X
         self.Label = Y
@@ -20,7 +20,8 @@ class miniClassifier():
         self.input = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
         self.output = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Label.shape[1]))
 
-
+        #q = tf.Graph()
+        #q.as_default(); q.device('/cpu:0');
     def set_learning_rate(self,lr):
         if(lr >0 and lr <1):
             self.learn_rate = lr
@@ -30,7 +31,8 @@ class miniClassifier():
         #SAME -> ensures same dimension
         convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = padding_type)
         biased = tf.nn.bias_add(convolve, bias)
-        return tf.nn.leaky_relu(biased, alpha = 0.3, name = name)
+        return tf.nn.relu(biased,name = name)
+        #return tf.nn.leaky_relu(biased, alpha = 0.3, name = name)
     
     def max_pooling(self,inFeed,name):
         return tf.nn.max_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1], padding = "SAME", name = name)
@@ -57,13 +59,13 @@ class miniClassifier():
 
     def build(self):        
         weights = {
-            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,3,8]),dtype = tf.float32,shape = [3,3,3,8], name = 'w1_1'),
-            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,8,15]),dtype = tf.float32,shape = [3,3,8,15], name = 'w2_1'),
+            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,3,10]),dtype = tf.float32,shape = [3,3,3,10], name = 'w1_1'),
+            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,10,15]),dtype = tf.float32,shape = [3,3,10,15], name = 'w2_1'),
             'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,15,5]),dtype = tf.float32,shape = [3,3,15,5], name = 'w3_1'),
             }
 
         biases = {
-            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b1_1'),
+            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (10,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (10,), name = 'b1_1'),
             'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (15,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (15,), name = 'b2_1'),
             'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (5,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (5,), name = 'b3_1'),            
             }
@@ -150,9 +152,11 @@ class miniClassifier():
         if (currentLoss == np.inf or lowestLoss == np.inf or currentLoss < (lowestLoss - 0.1) or ((currentLoss - lowestLoss)/(currentIter - lowestIter))<0.005 ) :
             #print("current: {} lowest: {}\n".format(currentLoss, lowestLoss))
             
-            self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
-            self.retrieveLayers['style2'] = self.sess.run(self.pool2, feed_dict={self.input: self.Img })#, self.output: self.Label})
-            self.retrieveLayers['contentpreout'] = self.sess.run(self.fc2, feed_dict={self.input: self.Img}) #, self.output: self.Label})
+            self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img})
+            self.retrieveLayers['style2'] = self.sess.run(self.pool2, feed_dict={self.input: self.Img })
+            self.retrieveLayers['style3'] =self.sess.run(self.pool3, feed_dict={self.input: self.Img })
+            self.retrieveLayers['contentprepreout'] = self.sess.run(self.relu1, feed_dict={self.input: self.Img}) 
+            self.retrieveLayers['contentpreout'] = self.sess.run(self.fc2, feed_dict={self.input: self.Img}) 
             self.retrieveLayers['w1'] = self.sess.run(self.weights['w1_1'])
             self.retrieveLayers['w2'] = self.sess.run(self.weights['w2_1'])
             self.retrieveLayers['w3'] = self.sess.run(self.weights['w3_1'])

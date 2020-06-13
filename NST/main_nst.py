@@ -16,7 +16,7 @@ g.as_default(); g.device('/gpu:0');
 
 #create content loss
 def content_loss(content_activation, generated_activation):
-    return tf.reduce_mean(tf.nn.l2_loss(content_activation - generated_activation)/generated_activation.shape[1].value)
+    return tf.reduce_mean(tf.abs(content_activation - generated_activation)/generated_activation.shape[1].value)
 
 #create style loss
 def gram_matrix(convoluted_layer):
@@ -48,9 +48,10 @@ fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
 
-a1 = 0.6
-a2 = 0.3
-a3 = 0.3
+a1 = 0.9
+a2 = 0.6
+a3 = 0.9
+a4 = 0.1
 
 #helper functions
 
@@ -78,20 +79,20 @@ with tf.Session() as sess:
     relu1 = tf.nn.relu(fc1)
     fc2 = fullcon_internal(fc2w, fc2b, relu1 , keep_prob = 0.8)
 
-    #backprop with loss minimization
-    loss_cost = content_loss(classifier.retrieveLayers['contentpreout'][0], fc2)*a1 + style_loss(classifier.retrieveLayers['style1'][1], pool1)*a2 + style_loss(classifier.retrieveLayers['style2'][1], pool2)*a3
-    optimizer = tf.train.AdamOptimizer(10,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
+    #backprop with loss minimization    
+    loss_cost = content_loss(classifier.retrieveLayers['contentpreout'][0], fc2)*a1 + content_loss(classifier.retrieveLayers['contentprepreout'][0], relu1)*a1+ style_loss(classifier.retrieveLayers['style1'][1], pool1)*a2 + style_loss(classifier.retrieveLayers['style2'][1], pool2)*a3 + style_loss(classifier.retrieveLayers['style3'][1],pool3)*a4
+    optimizer = tf.train.AdamOptimizer(1000,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
     init = tf.global_variables_initializer()
     sess.run(init)
     #commence iterations
     print("Commencing Neural Style Transfer\n")
-    for i in range(150):    
+    for i in range(200):    
         curr_loss = sess.run(loss_cost)
         sess.run(optimizer)
         print(curr_loss)
         clipper = tf.clip_by_value(GenImg,0.0,1.0)
         GenImg.assign(clipper)
-        img = sess.run(GenImg)
+        img = sess.run(clipper)        
 
     plt.imshow(img[0])
     plt.show()

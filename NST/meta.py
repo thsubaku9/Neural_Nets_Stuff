@@ -9,7 +9,8 @@ imageContent = Image.open(pathContent)
 imageStyle = Image.open(pathStyle)
 
 #matching scales
-imageStyle = imageStyle.resize(imageContent.size)
+imageContent = imageContent.resize(imageStyle.size)
+#imageStyle = imageStyle.resize(imageContent.size)
 #numpy image
 
 mainContent = np.array(imageContent,dtype = np.float32)
