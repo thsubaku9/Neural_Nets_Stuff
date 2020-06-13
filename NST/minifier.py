@@ -79,10 +79,10 @@ class miniClassifier():
         self.conv3_1 = self.conv_layer(self.pool2, weights["w3_1"], biases["b3_1"],'VALID', 'conv3_1')        
         self.pool3 = self.avg_pooling(self.conv3_1,"max_pool3")
 
-        self.pool4 = self.max_pooling(self.pool3,"max_pool3")
+        self.pool4 = self.max_pooling(self.pool3,"max_pool4")
         
         self.flat = self.flatten(self.pool4)
-        self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize,keep_prob = 0.3)
+        self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize,keep_prob = 0.5)
         self.relu1 = tf.nn.relu(self.fc1)
 
         self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.preOutputSize//2 , keep_prob = 0.8)
