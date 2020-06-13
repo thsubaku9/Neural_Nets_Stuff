@@ -152,13 +152,17 @@ class miniClassifier():
             
             self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
             self.retrieveLayers['style2'] = self.sess.run(self.pool2, feed_dict={self.input: self.Img })#, self.output: self.Label})
-            self.retrieveLayers['contentpreout'] = self.sess.run(self.sig1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
+            self.retrieveLayers['contentpreout'] = self.sess.run(self.fc2, feed_dict={self.input: self.Img}) #, self.output: self.Label})
             self.retrieveLayers['w1'] = self.sess.run(self.weights['w1_1'])
             self.retrieveLayers['w2'] = self.sess.run(self.weights['w2_1'])
             self.retrieveLayers['w3'] = self.sess.run(self.weights['w3_1'])
             self.retrieveLayers['b1'] = self.sess.run(self.biases['b1_1'])
             self.retrieveLayers['b2'] = self.sess.run(self.biases['b2_1'])
             self.retrieveLayers['b3'] = self.sess.run(self.biases['b3_1'])
+            self.retrieveLayers['fc1w'] = self.sess.run(self.weights['fc1'])
+            self.retrieveLayers['fc1b'] = self.sess.run(self.biases['fc1'])
+            self.retrieveLayers['fc2w'] = self.sess.run(self.weights['fc2'])
+            self.retrieveLayers['fc2b'] = self.sess.run(self.biases['fc2'])
             
             print('Value saved\n')
             #self.save_model()            
