@@ -15,12 +15,14 @@ imageStyle = imageStyle.resize(imageContent.size)
 mainContent = np.array(imageContent,dtype = np.float32)
 mainStyle = np.array(imageStyle,dtype =  np.float32)
 
+'''
 transpose_order = [1,0]
 if (mainContent.shape[2]>1):
     transpose_order += [2]
 
 mainContent = mainContent.transpose(transpose_order)
 mainStyle = mainStyle.transpose(transpose_order)
+'''
 
 shapeImg = mainContent.shape
 

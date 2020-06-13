@@ -152,10 +152,15 @@ class ImageClassifier():
         cost,optimizer,accuracy = self.optimize(classifier)
         
         init = tf.global_variables_initializer()
-
-        with tf.Session() as sess:
-            print("Starting Session\n")
-            
+        
+        #gpu freezes up if either power source is low or memory is unavailble, to avoid the later the below portion has been added
+        config = tf.ConfigProto()
+        config.gpu_options.allow_growth = True
+        config.gpu_options.per_process_gpu_memory_fraction = 0.9
+        #GPU-fix-done
+        
+        with tf.Session(config = config) as sess:
+            print("Starting Session\n")                        
             sess.run(init)            
             for it in range(iters):
                 if(batches == None):

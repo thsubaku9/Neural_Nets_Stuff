@@ -20,6 +20,7 @@ class miniClassifier():
         self.input = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Img.shape[1],self.Img.shape[2],self.Img.shape[3]))
         self.output = tf.compat.v1.placeholder(dtype = tf.float32, shape = (None,self.Label.shape[1]))
 
+
     def set_learning_rate(self,lr):
         if(lr >0 and lr <1):
             self.learn_rate = lr
@@ -104,10 +105,15 @@ class miniClassifier():
     def train_init(self):
         #run train_init before moving over to compile
         self.classifier = self.build()
-        self.cost, self.optimizer, self.accuracy = self.optimize(self.classifier)
-        
+        self.cost, self.optimizer, self.accuracy = self.optimize(self.classifier)        
         init = tf.global_variables_initializer()
-        self.sess = tf.Session()
+
+        #gpu freezes up if either power source is low or memory is unavailble, to avoid the later the below portion has been added
+        self.config = tf.ConfigProto()
+        self.config.gpu_options.allow_growth = True
+        #self.config.gpu_options.per_process_gpu_memory_fraction = 0.9
+        #GPU-fix-done
+        self.sess = tf.Session(config=self.config)
         self.sess.run(init)
         print("Initialization done\n")
         
@@ -147,6 +153,12 @@ class miniClassifier():
             self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
             self.retrieveLayers['style2'] = self.sess.run(self.pool2, feed_dict={self.input: self.Img })#, self.output: self.Label})
             self.retrieveLayers['contentpreout'] = self.sess.run(self.sig1, feed_dict={self.input: self.Img}) #, self.output: self.Label})
+            self.retrieveLayers['w1'] = self.sess.run(self.weights['w1_1'])
+            self.retrieveLayers['w2'] = self.sess.run(self.weights['w2_1'])
+            self.retrieveLayers['w3'] = self.sess.run(self.weights['w3_1'])
+            self.retrieveLayers['b1'] = self.sess.run(self.biases['b1_1'])
+            self.retrieveLayers['b2'] = self.sess.run(self.biases['b2_1'])
+            self.retrieveLayers['b3'] = self.sess.run(self.biases['b3_1'])
             
             print('Value saved\n')
             #self.save_model()            
