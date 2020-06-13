@@ -57,15 +57,15 @@ class miniClassifier():
 
     def build(self):        
         weights = {
-            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,3,5]),dtype = tf.float32,shape = [3,3,3,5], name = 'w1_1'),
-            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,5,10]),dtype = tf.float32,shape = [3,3,5,10], name = 'w2_1'),
-            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,10,2]),dtype = tf.float32,shape = [3,3,10,2], name = 'w3_1'),
+            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,3,8]),dtype = tf.float32,shape = [3,3,3,8], name = 'w1_1'),
+            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,8,15]),dtype = tf.float32,shape = [3,3,8,15], name = 'w2_1'),
+            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,15,5]),dtype = tf.float32,shape = [3,3,15,5], name = 'w3_1'),
             }
 
         biases = {
-            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (5,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (5,), name = 'b1_1'),
-            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (10,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (10,), name = 'b2_1'),
-            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (2,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (2,), name = 'b3_1'),            
+            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b1_1'),
+            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (15,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (15,), name = 'b2_1'),
+            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (5,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (5,), name = 'b3_1'),            
             }
 
         self.weights = weights; self.biases = biases;
@@ -74,7 +74,7 @@ class miniClassifier():
         self.pool1 = self.avg_pooling(self.conv1_1,"avg_pool1")
 
         self.conv2_1 = self.conv_layer(self.pool1, weights["w2_1"], biases["b2_1"],'VALID', 'conv2_1')
-        self.pool2 = self.avg_pooling(self.conv2_1,"avg_pool2")
+        self.pool2 = self.max_pooling(self.conv2_1,"avg_pool2")
 
         self.conv3_1 = self.conv_layer(self.pool2, weights["w3_1"], biases["b3_1"],'VALID', 'conv3_1')        
         self.pool3 = self.avg_pooling(self.conv3_1,"max_pool3")
