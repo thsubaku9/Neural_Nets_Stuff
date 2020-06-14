@@ -84,18 +84,19 @@ with tf.Session() as sess:
 
     #backprop with loss minimization    
     loss_cost = content_loss(classifier.retrieveLayers['contentpreout'][0], fc2)*a1 + content_loss(classifier.retrieveLayers['contentprepreout'][0], relu1)*a1+ style_loss(classifier.retrieveLayers['style1'][1], pool1)*a2 + style_loss(classifier.retrieveLayers['style2'][1], pool2)*a3 + style_loss(classifier.retrieveLayers['style3'][1],pool3)*a4
-    optimizer = tf.train.AdamOptimizer(2.0,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
+    optimizer = tf.train.AdamOptimizer(80.0,0.9,0.999,1e-06).minimize(loss_cost, var_list =[GenImg])
     init = tf.global_variables_initializer()
     sess.run(init)
     #commence iterations
     print("Commencing Neural Style Transfer\n")
-    for i in range(200):    
+    for i in range(300):    
         curr_loss = sess.run(loss_cost)
         sess.run(optimizer)
-        print(curr_loss)
         clipper = tf.clip_by_value(GenImg,0.0,1.0)
         GenImg.assign(clipper)
-        img = sess.run(clipper)        
+        img = sess.run(clipper)
+        if(i%10 == 0):
+            print(curr_loss)
 
     plt.imshow(img[0])
     plt.show()
