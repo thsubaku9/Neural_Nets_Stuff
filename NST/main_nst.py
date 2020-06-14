@@ -7,13 +7,21 @@ import matplotlib.pyplot as plt
 #create classifier
 classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
 classifier.train_init()
-classifier.compile(80)
+classifier.compile(100)
 
 #new session graph to ensure you don't run out of resources
 g = tf.Graph()
 g.as_default(); g.device('/gpu:0');
+#GPU fix
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+config.gpu_options.per_process_gpu_memory_fraction = 0.9
+#GPU fix
 
-
+#create image loss
+def image_loss(Img,base_img):    
+    return tf.reduce_sum(tf.abs(tf.subtract(Img[0],base_img)))
+    
 #create content loss
 def content_loss(content_activation, generated_activation):
     return tf.reduce_mean(tf.square(tf.subtract(content_activation,generated_activation)/generated_activation.shape[1].value))
@@ -38,22 +46,23 @@ GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[
 #load the frozen network and create graph
 nst_w1_1 = tf.constant(value = classifier.retrieveLayers["w1_1"], shape = classifier.retrieveLayers["w1_1"].shape, dtype = tf.float32)
 nst_w1_2 = tf.constant(value = classifier.retrieveLayers["w1_2"], shape = classifier.retrieveLayers["w1_2"].shape, dtype = tf.float32)
-nst_w2 = tf.constant(value = classifier.retrieveLayers["w2"], shape = classifier.retrieveLayers["w2"].shape, dtype = tf.float32)
+nst_w2_1 = tf.constant(value = classifier.retrieveLayers["w2_1"], shape = classifier.retrieveLayers["w2_1"].shape, dtype = tf.float32)
+nst_w2_2 = tf.constant(value = classifier.retrieveLayers["w2_2"], shape = classifier.retrieveLayers["w2_2"].shape, dtype = tf.float32)
 nst_w3 = tf.constant(value = classifier.retrieveLayers["w3"], shape = classifier.retrieveLayers["w3"].shape, dtype = tf.float32)
 nst_b1_1 = tf.constant(value = classifier.retrieveLayers["b1_1"], shape = classifier.retrieveLayers["b1_1"].shape, dtype = tf.float32)
 nst_b1_2 = tf.constant(value = classifier.retrieveLayers["b1_2"], shape = classifier.retrieveLayers["b1_2"].shape, dtype = tf.float32)
-nst_b2 = tf.constant(value = classifier.retrieveLayers["b2"], shape = classifier.retrieveLayers["b2"].shape, dtype = tf.float32)
+nst_b2_1 = tf.constant(value = classifier.retrieveLayers["b2_1"], shape = classifier.retrieveLayers["b2_1"].shape, dtype = tf.float32)
+nst_b2_2 = tf.constant(value = classifier.retrieveLayers["b2_2"], shape = classifier.retrieveLayers["b2_2"].shape, dtype = tf.float32)
 nst_b3 = tf.constant(value = classifier.retrieveLayers["b3"], shape = classifier.retrieveLayers["b3"].shape, dtype = tf.float32)
 fc1w = tf.constant(value = classifier.retrieveLayers["fc1w"], shape = classifier.retrieveLayers["fc1w"].shape, dtype = tf.float32)
 fc1b = tf.constant(value = classifier.retrieveLayers["fc1b"], shape = classifier.retrieveLayers["fc1b"].shape, dtype = tf.float32)
 fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier.retrieveLayers["fc2w"].shape, dtype = tf.float32)
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
-
-a1 = 0.6
-a2 = 0.3
-a3 = 0.8
-a4 = 0.4
+total_iterations = 400
+content_weight = 5
+style_weight = 0
+imagedelta_weight = 20
 
 #helper functions
 
@@ -63,33 +72,37 @@ def fullcon_internal(W,b,layer,keep_prob):
     return dropped
 
 #NST-Graph
-with tf.Session() as sess:
+with tf.Session(config = config) as sess:
     #forward_pass
     conv1_1 = classifier.conv_layer(GenImg,nst_w1_1,nst_b1_1,'VALID', 'gen_conv1')
-    conv1_2 = classifier.conv_layer(conv1_1,nst_w1_2,nst_b1_2,'VALID', 'conv1_2')
+    conv1_2 = classifier.conv_layer(conv1_1,nst_w1_2,nst_b1_2,'VALID', 'gen_conv1_2')
     pool1 = classifier.avg_pooling(conv1_2,"gen_pool1") #gram matrix feed
 
-    conv2 = classifier.conv_layer(pool1,nst_w2,nst_b2,'VALID', 'gen_conv2')
-    pool2 = classifier.max_pooling(conv2,"gen_pool2") #gram matrix feed
+    conv2_1 = classifier.conv_layer(pool1,nst_w2_1,nst_b2_1,'VALID', 'gen_conv2_1')
+    conv2_2 = classifier.conv_layer(conv2_1,nst_w2_2,nst_b2_2,'VALID', 'gen_conv2_2')
+    pool2 = classifier.max_pooling(conv2_2,"gen_pool2") #gram matrix feed
 
     conv3 = classifier.conv_layer(pool2,nst_w3,nst_b3,'VALID', 'gen_conv3')
     pool3 = classifier.avg_pooling(conv3,"gen_pool3")
-
-    pool4 = classifier.max_pooling(pool3,"gen_pool4")
-    flat = classifier.flatten(pool4)
+    
+    flat = classifier.flatten(pool3)
 
     fc1 = fullcon_internal(fc1w, fc1b, flat, keep_prob = 0.7)
     relu1 = tf.nn.relu(fc1)
     fc2 = fullcon_internal(fc2w, fc2b, relu1 , keep_prob = 0.8)
 
-    #backprop with loss minimization    
-    loss_cost = content_loss(classifier.retrieveLayers['contentpreout'][0], fc2)*a1 + content_loss(classifier.retrieveLayers['contentprepreout'][0], relu1)*a1+ style_loss(classifier.retrieveLayers['style1'][1], pool1)*a2 + style_loss(classifier.retrieveLayers['style2'][1], pool2)*a3 + style_loss(classifier.retrieveLayers['style3'][1],pool3)*a4
-    optimizer = tf.train.AdamOptimizer(60.0,0.4,0.9,1e-09).minimize(loss_cost, var_list =[GenImg])    
+    #backprop with loss minimization
+    #0 index -> style
+    #1 index -> content
+    content_cost = content_loss(classifier.retrieveLayers['contentpreout'][1], fc2) + content_loss(classifier.retrieveLayers['contentprepreout'][1], relu1)
+    style_cost = style_loss(classifier.retrieveLayers['style1'][0], pool1) + style_loss(classifier.retrieveLayers['style2'][0], pool2) + style_loss(classifier.retrieveLayers['style3'][0],pool3)
+    loss_cost = content_cost*content_weight + style_cost*style_weight + image_loss(GenImg,meta.joinedData[1])*imagedelta_weight
+    optimizer = tf.train.AdamOptimizer(200.0,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
     init = tf.global_variables_initializer()
     sess.run(init)
     #commence iterations
     print("Commencing Neural Style Transfer\n")
-    for i in range(300):    
+    for i in range(total_iterations):    
         curr_loss = sess.run(loss_cost)
         sess.run(optimizer)
         clipper = tf.clip_by_value(GenImg,0.0,1.0)

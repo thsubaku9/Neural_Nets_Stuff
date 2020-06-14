@@ -59,34 +59,35 @@ class miniClassifier():
 
     def build(self):        
         weights = {
-            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([5,5,3,6]),dtype = tf.float32,shape = [5,5,3,6], name = 'w1_1'),
-            'w1_2': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([5,5,6,6]),dtype = tf.float32,shape = [5,5,6,6], name = 'w1_2'),
-            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([7,7,6,12]),dtype = tf.float32,shape = [7,7,6,12], name = 'w2_1'),
-            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,12,15]),dtype = tf.float32,shape = [3,3,12,15], name = 'w3_1'),
+            'w1_1': tf.Variable(initial_value = tf.random.uniform(minval = 2, maxval = -2, shape = [5,5,3,6], dtype = tf.float32),dtype = tf.float32,shape = [5,5,3,6], name = 'w1_1'),
+            'w1_2': tf.Variable(initial_value = tf.random.uniform(minval = 2, maxval = -2, shape = [5,5,6,6], dtype = tf.float32),dtype = tf.float32,shape = [5,5,6,6], name = 'w1_2'),
+            'w2_1': tf.Variable(initial_value = tf.random.uniform(minval = 2, maxval = -2, shape = [5,5,6,12], dtype = tf.float32),dtype = tf.float32,shape = [5,5,6,12], name = 'w2_1'),
+            'w2_2': tf.Variable(initial_value = tf.random.uniform(minval = 2, maxval = -2, shape = [7,7,12,12], dtype = tf.float32),dtype = tf.float32,shape = [7,7,12,12], name = 'w2_2'),
+            'w3_1': tf.Variable(initial_value = tf.random.uniform(minval = 2, maxval = -2, shape = [5,5,12,8], dtype = tf.float32),dtype = tf.float32,shape = [5,5,12,8], name = 'w3_1'),
             }
 
         biases = {
             'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_1'),
             'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_2'),
             'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_1'),
-            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (15,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (15,), name = 'b3_1'),            
+            'b2_2': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_2'),
+            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b3_1'),            
             }
 
         self.weights = weights; self.biases = biases;
 
         self.conv1_1 = self.conv_layer(self.input,weights["w1_1"],biases["b1_1"],'VALID', 'conv1_1')
         self.conv1_2 = self.conv_layer(self.conv1_1,weights["w1_2"],biases["b1_2"],'VALID', 'conv1_2')
-        self.pool1 = self.avg_pooling(self.conv1_1,"avg_pool1")
+        self.pool1 = self.avg_pooling(self.conv1_2,"avg_pool1")
 
         self.conv2_1 = self.conv_layer(self.pool1, weights["w2_1"], biases["b2_1"],'VALID', 'conv2_1')
-        self.pool2 = self.max_pooling(self.conv2_1,"avg_pool2")
+        self.conv2_2 = self.conv_layer(self.conv2_1,weights["w2_2"],biases["b2_2"],'VALID', 'conv2_2')
+        self.pool2 = self.max_pooling(self.conv2_2,"avg_pool2")
 
         self.conv3_1 = self.conv_layer(self.pool2, weights["w3_1"], biases["b3_1"],'VALID', 'conv3_1')        
-        self.pool3 = self.avg_pooling(self.conv3_1,"max_pool3")
-
-        self.pool4 = self.max_pooling(self.pool3,"max_pool4")
+        self.pool3 = self.avg_pooling(self.conv3_1,"max_pool3")        
         
-        self.flat = self.flatten(self.pool4)
+        self.flat = self.flatten(self.pool3)
         self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize,keep_prob = 0.7)
         self.relu1 = tf.nn.relu(self.fc1)
 
@@ -98,9 +99,9 @@ class miniClassifier():
         return self.classifierOutput
 
     def optimize(self,logits):        
-        entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits_v2(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
+        entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
         cost = tf.reduce_mean(entropy_loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.4 ,beta2 = 0.99).minimize(cost)
         #optimizer = tf.train.AdadeltaOptimizer(learning_rate = self.learn_rate).minimize(cost)
                 
         correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(self.output,1))
@@ -144,7 +145,7 @@ class miniClassifier():
                 startingLoss = min(startingLoss,currentLoss)
                 bestIter = it
             if(it % 20 == 0):
-                    self.learn_rate = self.learn_rate / (1+ 0.1*it)
+                    self.learn_rate = self.learn_rate / (1+ 0.05*it)
                     
     def run_compute(self,feed_x,feed_y):
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
@@ -163,11 +164,13 @@ class miniClassifier():
             self.retrieveLayers['contentpreout'] = self.sess.run(self.fc2, feed_dict={self.input: self.Img}) 
             self.retrieveLayers['w1_1'] = self.sess.run(self.weights['w1_1'])
             self.retrieveLayers['w1_2'] = self.sess.run(self.weights['w1_2'])
-            self.retrieveLayers['w2'] = self.sess.run(self.weights['w2_1'])
+            self.retrieveLayers['w2_1'] = self.sess.run(self.weights['w2_1'])
+            self.retrieveLayers['w2_2'] = self.sess.run(self.weights['w2_2'])
             self.retrieveLayers['w3'] = self.sess.run(self.weights['w3_1'])
             self.retrieveLayers['b1_1'] = self.sess.run(self.biases['b1_1'])
             self.retrieveLayers['b1_2'] = self.sess.run(self.biases['b1_2'])
-            self.retrieveLayers['b2'] = self.sess.run(self.biases['b2_1'])
+            self.retrieveLayers['b2_1'] = self.sess.run(self.biases['b2_1'])
+            self.retrieveLayers['b2_2'] = self.sess.run(self.biases['b2_2'])
             self.retrieveLayers['b3'] = self.sess.run(self.biases['b3_1'])
             self.retrieveLayers['fc1w'] = self.sess.run(self.weights['fc1'])
             self.retrieveLayers['fc1b'] = self.sess.run(self.biases['fc1'])
