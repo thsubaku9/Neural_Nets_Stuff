@@ -32,5 +32,9 @@ joinedData = (joinedData)/ 255
 
 labels = np.array([x for x in range(joinedData.shape[0])])
 
-labelsOneHot = np.identity(labels.shape[0])
+labelsOneHot2 = np.identity(labels.shape[0])
 
+
+labelsOneHot = np.zeros((len(labels),5))
+labelsOneHot[0][0] = 1
+labelsOneHot[1][1] = 1

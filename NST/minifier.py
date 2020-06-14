@@ -6,8 +6,8 @@ import numpy as np
 tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
-    def __init__(self, X, Y, totalClasses = 2, preOutput = 3000):
-        self.learn_rate = 0.001
+    def __init__(self, X, Y, totalClasses = 5, preOutput = 2000):
+        self.learn_rate = 0.01
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -31,8 +31,8 @@ class miniClassifier():
         #SAME -> ensures same dimension
         convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = padding_type)
         biased = tf.nn.bias_add(convolve, bias)
-        return tf.nn.relu(biased,name = name)
-        #return tf.nn.leaky_relu(biased, alpha = 0.3, name = name)
+        #return tf.nn.relu(biased,name = name)
+        return tf.nn.leaky_relu(biased, alpha = 0.3, name = name)
     
     def max_pooling(self,inFeed,name):
         return tf.nn.max_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1], padding = "SAME", name = name)
@@ -59,20 +59,23 @@ class miniClassifier():
 
     def build(self):        
         weights = {
-            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,3,10]),dtype = tf.float32,shape = [3,3,3,10], name = 'w1_1'),
-            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,10,15]),dtype = tf.float32,shape = [3,3,10,15], name = 'w2_1'),
-            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,15,5]),dtype = tf.float32,shape = [3,3,15,5], name = 'w3_1'),
+            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([5,5,3,6]),dtype = tf.float32,shape = [5,5,3,6], name = 'w1_1'),
+            'w1_2': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([5,5,6,6]),dtype = tf.float32,shape = [5,5,6,6], name = 'w1_2'),
+            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([7,7,6,12]),dtype = tf.float32,shape = [7,7,6,12], name = 'w2_1'),
+            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,12,15]),dtype = tf.float32,shape = [3,3,12,15], name = 'w3_1'),
             }
 
         biases = {
-            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (10,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (10,), name = 'b1_1'),
-            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (15,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (15,), name = 'b2_1'),
-            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (5,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (5,), name = 'b3_1'),            
+            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_1'),
+            'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_2'),
+            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_1'),
+            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (15,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (15,), name = 'b3_1'),            
             }
 
         self.weights = weights; self.biases = biases;
 
-        self.conv1_1 = self.conv_layer(self.input,weights["w1_1"],biases["b1_1"],'VALID', 'conv1_1')
+        self.conv1_1 = self.conv_layer(self.input,weights["w1_1"],biases["b1_1"],'SAME', 'conv1_1')
+        self.conv1_2 = self.conv_layer(self.conv1_1,weights["w1_2"],biases["b1_2"],'SAME', 'conv1_2')
         self.pool1 = self.avg_pooling(self.conv1_1,"avg_pool1")
 
         self.conv2_1 = self.conv_layer(self.pool1, weights["w2_1"], biases["b2_1"],'VALID', 'conv2_1')
@@ -84,7 +87,7 @@ class miniClassifier():
         self.pool4 = self.max_pooling(self.pool3,"max_pool4")
         
         self.flat = self.flatten(self.pool4)
-        self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize,keep_prob = 0.5)
+        self.fc1 = self.fullcon(self.flat,"fc1",self.flat.shape[1].value,self.preOutputSize,keep_prob = 0.7)
         self.relu1 = tf.nn.relu(self.fc1)
 
         self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.preOutputSize//2 , keep_prob = 0.8)
@@ -157,10 +160,12 @@ class miniClassifier():
             self.retrieveLayers['style3'] =self.sess.run(self.pool3, feed_dict={self.input: self.Img })
             self.retrieveLayers['contentprepreout'] = self.sess.run(self.relu1, feed_dict={self.input: self.Img}) 
             self.retrieveLayers['contentpreout'] = self.sess.run(self.fc2, feed_dict={self.input: self.Img}) 
-            self.retrieveLayers['w1'] = self.sess.run(self.weights['w1_1'])
+            self.retrieveLayers['w1_1'] = self.sess.run(self.weights['w1_1'])
+            self.retrieveLayers['w1_2'] = self.sess.run(self.weights['w1_2'])
             self.retrieveLayers['w2'] = self.sess.run(self.weights['w2_1'])
             self.retrieveLayers['w3'] = self.sess.run(self.weights['w3_1'])
-            self.retrieveLayers['b1'] = self.sess.run(self.biases['b1_1'])
+            self.retrieveLayers['b1_1'] = self.sess.run(self.biases['b1_1'])
+            self.retrieveLayers['b1_2'] = self.sess.run(self.biases['b1_2'])
             self.retrieveLayers['b2'] = self.sess.run(self.biases['b2_1'])
             self.retrieveLayers['b3'] = self.sess.run(self.biases['b3_1'])
             self.retrieveLayers['fc1w'] = self.sess.run(self.weights['fc1'])

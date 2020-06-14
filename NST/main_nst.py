@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 #create classifier
 classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
 classifier.train_init()
-classifier.compile(50)
+classifier.compile(80)
 
 #new session graph to ensure you don't run out of resources
 g = tf.Graph()
@@ -16,7 +16,7 @@ g.as_default(); g.device('/gpu:0');
 
 #create content loss
 def content_loss(content_activation, generated_activation):
-    return tf.reduce_mean(tf.abs(content_activation - generated_activation)/generated_activation.shape[1].value)
+    return tf.reduce_mean(tf.square(tf.subtract(content_activation,generated_activation)/generated_activation.shape[1].value))
 
 #create style loss
 def gram_matrix(convoluted_layer):
@@ -30,16 +30,18 @@ def style_loss(style_layer, generated_layer):
     _,h,w,c = generated_layer.get_shape().as_list()
     gram_style = gram_matrix(style_layer)
     gram_gen = gram_matrix(generated_layer) 
-    return tf.reduce_mean(tf.abs(gram_style - gram_gen)/((h*w*c)**2))
+    return tf.reduce_mean(tf.square(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
 
 #create Initial image
 GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), minval = 0, maxval = 1,dtype = tf.float32), dtype = tf.float32, shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), name = "GeneratedImg")
 
 #load the frozen network and create graph
-nst_w1 = tf.constant(value = classifier.retrieveLayers["w1"], shape = classifier.retrieveLayers["w1"].shape, dtype = tf.float32)
+nst_w1_1 = tf.constant(value = classifier.retrieveLayers["w1_1"], shape = classifier.retrieveLayers["w1_1"].shape, dtype = tf.float32)
+nst_w1_2 = tf.constant(value = classifier.retrieveLayers["w1_2"], shape = classifier.retrieveLayers["w1_2"].shape, dtype = tf.float32)
 nst_w2 = tf.constant(value = classifier.retrieveLayers["w2"], shape = classifier.retrieveLayers["w2"].shape, dtype = tf.float32)
 nst_w3 = tf.constant(value = classifier.retrieveLayers["w3"], shape = classifier.retrieveLayers["w3"].shape, dtype = tf.float32)
-nst_b1 = tf.constant(value = classifier.retrieveLayers["b1"], shape = classifier.retrieveLayers["b1"].shape, dtype = tf.float32)
+nst_b1_1 = tf.constant(value = classifier.retrieveLayers["b1_1"], shape = classifier.retrieveLayers["b1_1"].shape, dtype = tf.float32)
+nst_b1_2 = tf.constant(value = classifier.retrieveLayers["b1_2"], shape = classifier.retrieveLayers["b1_2"].shape, dtype = tf.float32)
 nst_b2 = tf.constant(value = classifier.retrieveLayers["b2"], shape = classifier.retrieveLayers["b2"].shape, dtype = tf.float32)
 nst_b3 = tf.constant(value = classifier.retrieveLayers["b3"], shape = classifier.retrieveLayers["b3"].shape, dtype = tf.float32)
 fc1w = tf.constant(value = classifier.retrieveLayers["fc1w"], shape = classifier.retrieveLayers["fc1w"].shape, dtype = tf.float32)
@@ -48,10 +50,10 @@ fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
 
-a1 = 0.9
-a2 = 0.6
-a3 = 0.9
-a4 = 0.1
+a1 = 0.6
+a2 = 0.3
+a3 = 0.8
+a4 = 0.4
 
 #helper functions
 
@@ -63,8 +65,9 @@ def fullcon_internal(W,b,layer,keep_prob):
 #NST-Graph
 with tf.Session() as sess:
     #forward_pass
-    conv1 = classifier.conv_layer(GenImg,nst_w1,nst_b1,'VALID', 'gen_conv1')
-    pool1 = classifier.avg_pooling(conv1,"gen_pool1") #gram matrix feed
+    conv1_1 = classifier.conv_layer(GenImg,nst_w1_1,nst_b1_1,'SAME', 'gen_conv1')
+    conv1_2 = classifier.conv_layer(conv1_1,nst_w1_2,nst_b1_2,'SAME', 'conv1_2')
+    pool1 = classifier.avg_pooling(conv1_2,"gen_pool1") #gram matrix feed
 
     conv2 = classifier.conv_layer(pool1,nst_w2,nst_b2,'VALID', 'gen_conv2')
     pool2 = classifier.max_pooling(conv2,"gen_pool2") #gram matrix feed
@@ -75,13 +78,13 @@ with tf.Session() as sess:
     pool4 = classifier.max_pooling(pool3,"gen_pool4")
     flat = classifier.flatten(pool4)
 
-    fc1 = fullcon_internal(fc1w, fc1b, flat, keep_prob = 0.5)
+    fc1 = fullcon_internal(fc1w, fc1b, flat, keep_prob = 0.7)
     relu1 = tf.nn.relu(fc1)
     fc2 = fullcon_internal(fc2w, fc2b, relu1 , keep_prob = 0.8)
 
     #backprop with loss minimization    
     loss_cost = content_loss(classifier.retrieveLayers['contentpreout'][0], fc2)*a1 + content_loss(classifier.retrieveLayers['contentprepreout'][0], relu1)*a1+ style_loss(classifier.retrieveLayers['style1'][1], pool1)*a2 + style_loss(classifier.retrieveLayers['style2'][1], pool2)*a3 + style_loss(classifier.retrieveLayers['style3'][1],pool3)*a4
-    optimizer = tf.train.AdamOptimizer(1000,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
+    optimizer = tf.train.AdamOptimizer(2.0,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
     init = tf.global_variables_initializer()
     sess.run(init)
     #commence iterations
