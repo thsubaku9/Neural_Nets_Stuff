@@ -30,7 +30,7 @@ def style_loss(style_layer, generated_layer):
     _,h,w,c = generated_layer.get_shape().as_list()
     gram_style = gram_matrix(style_layer)
     gram_gen = gram_matrix(generated_layer) 
-    return tf.reduce_mean(tf.square(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
+    return tf.reduce_mean(tf.abs(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
 
 #create Initial image
 GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), minval = 0, maxval = 1,dtype = tf.float32), dtype = tf.float32, shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), name = "GeneratedImg")
@@ -65,8 +65,8 @@ def fullcon_internal(W,b,layer,keep_prob):
 #NST-Graph
 with tf.Session() as sess:
     #forward_pass
-    conv1_1 = classifier.conv_layer(GenImg,nst_w1_1,nst_b1_1,'SAME', 'gen_conv1')
-    conv1_2 = classifier.conv_layer(conv1_1,nst_w1_2,nst_b1_2,'SAME', 'conv1_2')
+    conv1_1 = classifier.conv_layer(GenImg,nst_w1_1,nst_b1_1,'VALID', 'gen_conv1')
+    conv1_2 = classifier.conv_layer(conv1_1,nst_w1_2,nst_b1_2,'VALID', 'conv1_2')
     pool1 = classifier.avg_pooling(conv1_2,"gen_pool1") #gram matrix feed
 
     conv2 = classifier.conv_layer(pool1,nst_w2,nst_b2,'VALID', 'gen_conv2')
@@ -84,7 +84,7 @@ with tf.Session() as sess:
 
     #backprop with loss minimization    
     loss_cost = content_loss(classifier.retrieveLayers['contentpreout'][0], fc2)*a1 + content_loss(classifier.retrieveLayers['contentprepreout'][0], relu1)*a1+ style_loss(classifier.retrieveLayers['style1'][1], pool1)*a2 + style_loss(classifier.retrieveLayers['style2'][1], pool2)*a3 + style_loss(classifier.retrieveLayers['style3'][1],pool3)*a4
-    optimizer = tf.train.AdamOptimizer(80.0,0.9,0.999,1e-06).minimize(loss_cost, var_list =[GenImg])
+    optimizer = tf.train.AdamOptimizer(60.0,0.4,0.9,1e-09).minimize(loss_cost, var_list =[GenImg])    
     init = tf.global_variables_initializer()
     sess.run(init)
     #commence iterations

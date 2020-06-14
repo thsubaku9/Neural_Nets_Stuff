@@ -7,7 +7,7 @@ tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 5, preOutput = 2000):
-        self.learn_rate = 0.01
+        self.learn_rate = 0.001
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -48,7 +48,7 @@ class miniClassifier():
         return tf.reshape(layer,[-1,totalNeurons])
     
     def fullcon(self, layer, name, inputNeurons, outputNeurons, keep_prob = 0.3 ):
-        W = tf.Variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons), mean = 0.0, stddev = 3, dtype = tf.float32))
+        W = tf.Variable(name = name, shape = (inputNeurons,outputNeurons), dtype = tf.float32, initial_value = tf.random.normal((inputNeurons,outputNeurons), mean = 0.0, stddev = 1, dtype = tf.float32))
         b = tf.Variable(name = name, shape = (outputNeurons,), dtype = tf.float32, initial_value = tf.random.normal((outputNeurons,), mean = 0.0, stddev = 1, dtype = tf.float32))
 
         self.weights[name] = W
@@ -59,10 +59,10 @@ class miniClassifier():
 
     def build(self):        
         weights = {
-            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 2, dtype = tf.float32)([5,5,3,6]),dtype = tf.float32,shape = [5,5,3,6], name = 'w1_1'),
-            'w1_2': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 2, dtype = tf.float32)([5,5,6,6]),dtype = tf.float32,shape = [5,5,6,6], name = 'w1_2'),
-            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 2, dtype = tf.float32)([7,7,6,12]),dtype = tf.float32,shape = [7,7,6,12], name = 'w2_1'),
-            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 2, dtype = tf.float32)([3,3,12,15]),dtype = tf.float32,shape = [3,3,12,15], name = 'w3_1'),
+            'w1_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([5,5,3,6]),dtype = tf.float32,shape = [5,5,3,6], name = 'w1_1'),
+            'w1_2': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([5,5,6,6]),dtype = tf.float32,shape = [5,5,6,6], name = 'w1_2'),
+            'w2_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([7,7,6,12]),dtype = tf.float32,shape = [7,7,6,12], name = 'w2_1'),
+            'w3_1': tf.Variable(initial_value = tf.truncated_normal_initializer(mean = 0.0, stddev = 1, dtype = tf.float32)([3,3,12,15]),dtype = tf.float32,shape = [3,3,12,15], name = 'w3_1'),
             }
 
         biases = {
@@ -74,8 +74,8 @@ class miniClassifier():
 
         self.weights = weights; self.biases = biases;
 
-        self.conv1_1 = self.conv_layer(self.input,weights["w1_1"],biases["b1_1"],'SAME', 'conv1_1')
-        self.conv1_2 = self.conv_layer(self.conv1_1,weights["w1_2"],biases["b1_2"],'SAME', 'conv1_2')
+        self.conv1_1 = self.conv_layer(self.input,weights["w1_1"],biases["b1_1"],'VALID', 'conv1_1')
+        self.conv1_2 = self.conv_layer(self.conv1_1,weights["w1_2"],biases["b1_2"],'VALID', 'conv1_2')
         self.pool1 = self.avg_pooling(self.conv1_1,"avg_pool1")
 
         self.conv2_1 = self.conv_layer(self.pool1, weights["w2_1"], biases["b2_1"],'VALID', 'conv2_1')
@@ -99,9 +99,10 @@ class miniClassifier():
 
     def optimize(self,logits):        
         entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits_v2(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
-        cost = tf.reduce_mean(entropy_loss)        
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.7, beta2 = 0.8).minimize(cost)
-        
+        cost = tf.reduce_mean(entropy_loss)
+        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate).minimize(cost)
+        #optimizer = tf.train.AdadeltaOptimizer(learning_rate = self.learn_rate).minimize(cost)
+                
         correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(self.output,1))
         acc = tf.reduce_mean(tf.cast(correct_pred,tf.float32))
 
