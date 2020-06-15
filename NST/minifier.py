@@ -100,7 +100,7 @@ class miniClassifier():
 
     def optimize(self,logits):        
         entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
-        cost = tf.reduce_mean(entropy_loss) + 0.01*tf.nn.l2_loss(self.weights["fc2"]) + 0.02*tf.nn.l2_loss(self.weights["fc1"])
+        cost = tf.reduce_mean(entropy_loss) + 0.03*tf.nn.l2_loss(self.weights["fc2"]) + 0.02*tf.nn.l2_loss(self.weights["fc1"])
         #optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.4 ,beta2 = 0.99).minimize(cost)
         #optimizer = tf.train.AdadeltaOptimizer(learning_rate = self.learn_rate).minimize(cost)
         optimizer  = tf.train.GradientDescentOptimizer(learning_rate = self.learn_rate).minimize(cost)
@@ -126,25 +126,23 @@ class miniClassifier():
         print("Initialization done\n")
         
     def compile(self,iters = 150,batches = None):
-        startingLoss = np.inf
-        currentLoss = np.inf
-        bestIter = 0
+        startingAcc = 0
+        currentAcc = 0        
         for it in range(iters):
             if(batches == None):
                 batch_x = self.Img
                 batch_y = self.Label
-                currentLoss = self.run_compute(batch_x,batch_y)                
+                currentAcc = self.run_compute(batch_x,batch_y)                
             else:
                 intermid_sum = 0
                 for batch_pointer in range(len(self.Img)//batches):                    
                     batch_x = self.Img[batch_pointer*batches:min((batch_pointer+1)*batches,len(self.Img))]
                     batch_y = self.Label[batch_pointer*batches:min((batch_pointer+1)*batches,len(self.Label))]
                     intermid_sum += self.run_compute(batch_x,batch_y)
-                currentLoss /= batches
-            update = self.oneshot_save(startingLoss, currentLoss, bestIter, it)    
+                currentAcc /= batches
+            update = self.oneshot_save(startingAcc, currentAcc)    
             if(update):
-                startingLoss = min(startingLoss,currentLoss)
-                bestIter = it
+                startingAcc = max(startingAcc,currentAcc)                
             if(it % 20 == 0):
                     self.learn_rate = self.learn_rate / (1+ 0.05*it)
                     
@@ -152,10 +150,10 @@ class miniClassifier():
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
         loss,acc = self.sess.run([self.cost, self.accuracy],feed_dict={self.input: feed_x, self.output: feed_y})
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
-        return loss
+        return acc
 
-    def oneshot_save(self, lowestLoss, currentLoss, lowestIter, currentIter):        
-        if (currentLoss == np.inf or lowestLoss == np.inf or currentLoss < (lowestLoss - 0.1) or ((currentLoss - lowestLoss)/(currentIter - lowestIter))<0.005 ) :
+    def oneshot_save(self, startingAcc, currentAcc):
+        if (startingAcc < currentAcc) :
             #print("current: {} lowest: {}\n".format(currentLoss, lowestLoss))
             
             self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img})
@@ -182,8 +180,7 @@ class miniClassifier():
             #self.save_model()            
             return True
         
-        else:
-            #print('OUCH : {}'.format(lowestLoss))
+        else:            
             return False
             
     def save_model(self,_path = "/tmp/model.ckpt"):
