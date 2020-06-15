@@ -42,7 +42,7 @@ loss = tf.reduce_sum(tf.square(tf.subtract(G,tmp[0]))) * 2.2
 opt = tf.train.GradientDescentOptimizer(0.01).minimize(loss)
 
 G2 = tf.Variable(initial_value = tf.random.uniform(shape = (1,shapeImg[0],shapeImg[1],shapeImg[2]), minval = 0, maxval = 1,dtype = tf.float32), dtype = tf.float32, shape = (1,shapeImg[0],shapeImg[1],shapeImg[2]), name = "NoisyImg_Style")
-loss2 = tf.reduce_sum(tf.square(tf.subtract(G2,tmp2[0]))) * 1.1
+loss2 = tf.reduce_sum(tf.square(tf.subtract(G2,tmp2[0]))) * 1.4
 opt2 = tf.train.GradientDescentOptimizer(0.01).minimize(loss2)
 
 #GPU fix

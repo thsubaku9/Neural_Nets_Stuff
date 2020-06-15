@@ -7,7 +7,7 @@ tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 5, preOutput = 2000):
-        self.learn_rate = 0.002
+        self.learn_rate = 0.003
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -150,7 +150,7 @@ class miniClassifier():
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
         loss,acc = self.sess.run([self.cost, self.accuracy],feed_dict={self.input: feed_x, self.output: feed_y})
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
-        return acc
+        return loss #acc
 
     def oneshot_save(self, startingAcc, currentAcc):
         if (startingAcc < currentAcc) :
