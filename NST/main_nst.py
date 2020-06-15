@@ -112,7 +112,7 @@ with tf.Session(config = config) as sess:
         if(i%10 == 0):
             #add an exp gain for learning rate ?
             print(curr_loss)
-            learning_rate *= 1.5
+            learning_rate *= 2.1
 
     plt.imshow(img[0])
     plt.show()
