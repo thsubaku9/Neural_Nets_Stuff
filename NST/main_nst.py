@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 #create classifier
 classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
 classifier.train_init()
-classifier.compile(100)
+classifier.compile(70)
 
 #new session graph to ensure you don't run out of resources
 g = tf.Graph()
@@ -59,11 +59,11 @@ fc1b = tf.constant(value = classifier.retrieveLayers["fc1b"], shape = classifier
 fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier.retrieveLayers["fc2w"].shape, dtype = tf.float32)
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
-total_iterations = 400
-content_weight = 5
-style_weight = 0
-imagedelta_weight = 20
-
+total_iterations = 300
+content_weight = 0.03
+style_weight = 0.04
+imagedelta_weight = 2
+learning_rate = 200.0
 #helper functions
 
 def fullcon_internal(W,b,layer,keep_prob):
@@ -74,7 +74,7 @@ def fullcon_internal(W,b,layer,keep_prob):
 #NST-Graph
 with tf.Session(config = config) as sess:
     #forward_pass
-    conv1_1 = classifier.conv_layer(GenImg,nst_w1_1,nst_b1_1,'VALID', 'gen_conv1')
+    conv1_1 = classifier.conv_layer(GenImg,nst_w1_1,nst_b1_1,'VALID', 'gen_conv1_1')
     conv1_2 = classifier.conv_layer(conv1_1,nst_w1_2,nst_b1_2,'VALID', 'gen_conv1_2')
     pool1 = classifier.avg_pooling(conv1_2,"gen_pool1") #gram matrix feed
 
@@ -94,22 +94,25 @@ with tf.Session(config = config) as sess:
     #backprop with loss minimization
     #0 index -> style
     #1 index -> content
-    content_cost = content_loss(classifier.retrieveLayers['contentpreout'][1], fc2) + content_loss(classifier.retrieveLayers['contentprepreout'][1], relu1)
-    style_cost = style_loss(classifier.retrieveLayers['style1'][0], pool1) + style_loss(classifier.retrieveLayers['style2'][0], pool2) + style_loss(classifier.retrieveLayers['style3'][0],pool3)
-    loss_cost = content_cost*content_weight + style_cost*style_weight + image_loss(GenImg,meta.joinedData[1])*imagedelta_weight
-    optimizer = tf.train.AdamOptimizer(200.0,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
+    content_cost = content_loss(classifier.retrieveLayers['contentpreout'][1], fc2) #+ content_loss(classifier.retrieveLayers['contentprepreout'][1], relu1)
+    style_cost = style_loss(classifier.retrieveLayers['style1'][0], pool1) + style_loss(classifier.retrieveLayers['style2'][0], pool2) #+ style_loss(classifier.retrieveLayers['style3'][0],pool3)
+    loss_cost = image_loss(GenImg,meta.joinedData[1])*imagedelta_weight #+ content_cost*content_weight + style_cost*style_weight
+    optimizer = tf.train.AdamOptimizer(learning_rate,0.9,0.999,1e-08).minimize(loss_cost, var_list =[GenImg])
     init = tf.global_variables_initializer()
     sess.run(init)
     #commence iterations
     print("Commencing Neural Style Transfer\n")
-    for i in range(total_iterations):    
+    for i in range(total_iterations):
+        #add independent loss section
         curr_loss = sess.run(loss_cost)
         sess.run(optimizer)
         clipper = tf.clip_by_value(GenImg,0.0,1.0)
         GenImg.assign(clipper)
         img = sess.run(clipper)
         if(i%10 == 0):
+            #add an exp gain for learning rate ?
             print(curr_loss)
+            learning_rate *= 1.2
 
     plt.imshow(img[0])
     plt.show()

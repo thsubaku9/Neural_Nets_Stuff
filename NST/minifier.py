@@ -7,7 +7,7 @@ tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 5, preOutput = 2000):
-        self.learn_rate = 0.001
+        self.learn_rate = 0.002
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -31,8 +31,8 @@ class miniClassifier():
         #SAME -> ensures same dimension
         convolve = tf.nn.conv2d(inFeed ,tfFilter, strides = (1,1,1,1), padding = padding_type)
         biased = tf.nn.bias_add(convolve, bias)
-        #return tf.nn.relu(biased,name = name)
-        return tf.nn.leaky_relu(biased, alpha = 0.3, name = name)
+        return tf.nn.relu(biased,name = name)
+        #return tf.nn.leaky_relu(biased, alpha = 0.3, name = name)
     
     def max_pooling(self,inFeed,name):
         return tf.nn.max_pool(inFeed, ksize = [1,2,2,1], strides = [1,2,2,1], padding = "SAME", name = name)
@@ -67,11 +67,11 @@ class miniClassifier():
             }
 
         biases = {
-            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_1'),
-            'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_2'),
-            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_1'),
-            'b2_2': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_2'),
-            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b3_1'),            
+            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_1'),
+            'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_2'),
+            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_1'),
+            'b2_2': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_2'),
+            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b3_1'),            
             }
 
         self.weights = weights; self.biases = biases;
@@ -100,9 +100,10 @@ class miniClassifier():
 
     def optimize(self,logits):        
         entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
-        cost = tf.reduce_mean(entropy_loss)
-        optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.4 ,beta2 = 0.99).minimize(cost)
+        cost = tf.reduce_mean(entropy_loss) + 0.01*tf.nn.l2_loss(self.weights["fc2"]) + 0.02*tf.nn.l2_loss(self.weights["fc1"])
+        #optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.4 ,beta2 = 0.99).minimize(cost)
         #optimizer = tf.train.AdadeltaOptimizer(learning_rate = self.learn_rate).minimize(cost)
+        optimizer  = tf.train.GradientDescentOptimizer(learning_rate = self.learn_rate).minimize(cost)
                 
         correct_pred = tf.equal(tf.argmax(logits,1),tf.argmax(self.output,1))
         acc = tf.reduce_mean(tf.cast(correct_pred,tf.float32))
