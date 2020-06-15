@@ -5,7 +5,7 @@ from minifier import *
 import matplotlib.pyplot as plt
 
 #create classifier
-classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
+classifier = miniClassifier(meta.joinedData,meta.labelsOneHot, totalClasses = 3)
 classifier.train_init()
 classifier.compile(70)
 

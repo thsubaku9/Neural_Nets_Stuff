@@ -6,7 +6,7 @@ import numpy as np
 tf.compat.v1.reset_default_graph()
 
 class miniClassifier():
-    def __init__(self, X, Y, totalClasses = 5, preOutput = 2000):
+    def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
         self.learn_rate = 0.003
         self.Img = X
         self.Label = Y
@@ -142,7 +142,7 @@ class miniClassifier():
                 currentAcc /= batches
             update = self.oneshot_save(startingAcc, currentAcc)    
             if(update):
-                startingAcc = max(startingAcc,currentAcc)                
+                startingAcc = min(startingAcc,currentAcc)                
             if(it % 20 == 0):
                     self.learn_rate = self.learn_rate / (1+ 0.05*it)
                     

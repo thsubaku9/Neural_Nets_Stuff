@@ -67,10 +67,13 @@ with tf.Session(config = config) as sess:
             if(ls<= bench_val):
                 arr_noisy.append(img[0])
                 labels.append(1)
+            elif(ls <= 1.5 *bench_val):
+                arr_noisy.append(img[0])
+                labels.append(2)
         #if(i%20 == 0):
             #plt.imshow(img[0])
             #plt.show()            
-
+    
         ls2 = sess.run(loss2)
         sess.run(opt2)
         clipper2 = tf.clip_by_value(G2,0.0,1.0)
@@ -83,13 +86,16 @@ with tf.Session(config = config) as sess:
             if(ls2 <= bench_val2):
                 arr_noisy.append(img2[0])
                 labels.append(0)
+            elif(ls <= 1.5 *bench_val):
+                arr_noisy.append(img2[0])
+                labels.append(2)
         #if(i%20 == 0):
             #plt.imshow(img2[0])
             #plt.show()
 
 joinedData = np.stack(arr_noisy)
 
-labelsOneHot = np.zeros((len(labels),5))
+labelsOneHot = np.zeros((len(labels),3))
 for x in range(0,len(labels)):
     labelsOneHot[x][labels[x]] = 1
 
