@@ -5,13 +5,16 @@ from minifier import *
 import matplotlib.pyplot as plt
 
 #create classifier
-classifier = miniClassifier(meta.joinedData,meta.labelsOneHot, totalClasses = 3)
+tf.reset_default_graph()
+classifier = miniClassifier(meta.joinedData,meta.labelsOneHot,totalClasses = 3)
 classifier.train_init()
-classifier.compile(70)
+classifier.compile(80)
+classifier.sess.close()
 
 #new session graph to ensure you don't run out of resources
 g = tf.Graph()
 g.as_default(); g.device('/gpu:0');
+tf.reset_default_graph()
 #GPU fix
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True

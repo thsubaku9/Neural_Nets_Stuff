@@ -3,11 +3,9 @@
 import tensorflow as tf
 import numpy as np
 
-tf.compat.v1.reset_default_graph()
-
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
-        self.learn_rate = 0.003
+        self.learn_rate = 0.1
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -100,7 +98,7 @@ class miniClassifier():
 
     def optimize(self,logits):        
         entropy_loss = tf.clip_by_value(tf.nn.softmax_cross_entropy_with_logits(labels = self.output, logits = logits),clip_value_min = -1000, clip_value_max = 1000)
-        cost = tf.reduce_mean(entropy_loss) + 0.03*tf.nn.l2_loss(self.weights["fc2"]) + 0.02*tf.nn.l2_loss(self.weights["fc1"])
+        cost = tf.reduce_mean(entropy_loss) + 0.02*tf.nn.l2_loss(self.weights["fc2"]) + 0.02*tf.nn.l2_loss(self.weights["fc1"])
         #optimizer = tf.train.AdamOptimizer(learning_rate = self.learn_rate, beta1 = 0.4 ,beta2 = 0.99).minimize(cost)
         #optimizer = tf.train.AdadeltaOptimizer(learning_rate = self.learn_rate).minimize(cost)
         optimizer  = tf.train.GradientDescentOptimizer(learning_rate = self.learn_rate).minimize(cost)
@@ -142,15 +140,16 @@ class miniClassifier():
                 currentAcc /= batches
             update = self.oneshot_save(startingAcc, currentAcc)    
             if(update):
-                startingAcc = min(startingAcc,currentAcc)                
+                startingAcc = max(startingAcc,currentAcc)                
             if(it % 20 == 0):
                     self.learn_rate = self.learn_rate / (1+ 0.05*it)
+        
                     
     def run_compute(self,feed_x,feed_y):
         opt = self.sess.run(self.optimizer,feed_dict={self.input: feed_x, self.output: feed_y})
         loss,acc = self.sess.run([self.cost, self.accuracy],feed_dict={self.input: feed_x, self.output: feed_y})
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
-        return loss #acc
+        return acc
 
     def oneshot_save(self, startingAcc, currentAcc):
         if (startingAcc < currentAcc) :
@@ -198,8 +197,11 @@ class miniClassifier():
         
 #HIDE this before release
 '''
-classifier = miniClassifier(meta.joinedData,meta.labelsOneHot)
+import meta
+tf.reset_default_graph()
+classifier = miniClassifier(meta.joinedData,meta.labelsOneHot,totalClasses = 3)
 classifier.train_init()
-classifier.compile(100)
+classifier.compile(80)
+classifier.sess.close()
 '''
 #HIDE
