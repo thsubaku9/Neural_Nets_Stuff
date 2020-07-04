@@ -41,7 +41,7 @@ def style_loss(style_layer, generated_layer):
     _,h,w,c = generated_layer.get_shape().as_list()
     gram_style = gram_matrix(style_layer)
     gram_gen = gram_matrix(generated_layer) 
-    return tf.reduce_mean(tf.abs(tf.square(gram_style,gram_gen))/((h*w*c)**2))
+    return tf.reduce_mean(tf.square(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
 
 #create Initial image
 GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), minval = 0, maxval = 255,dtype = tf.float32), dtype = tf.float32, shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), name = "GeneratedImg")
