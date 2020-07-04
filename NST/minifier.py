@@ -155,7 +155,7 @@ class miniClassifier():
         return acc
 
     def oneshot_save(self, startingAcc, currentAcc, default_save = False, saveThresh = 0.8):
-        if (startingAcc < currentAcc) :
+        if (startingAcc <= currentAcc) :
             #print("current: {} lowest: {}\n".format(currentLoss, lowestLoss))
             
             self.retrieveLayers['style1'] = self.sess.run(self.pool1, feed_dict={self.input: self.Img})

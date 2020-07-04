@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 tf.reset_default_graph()
 classifier = miniClassifier(meta.joinedData,meta.labelsOneHot,totalClasses = 3)
 classifier.train_init()
-classifier.compile(120)
+classifier.compile(150)
 classifier.sess.close()
 
 #new session graph to ensure you don't run out of resources
@@ -63,9 +63,9 @@ fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
 total_iterations = 300
-content_weight = 0.3
+content_weight = 0.5
 style_weight = 2
-imagedelta_weight = 0.1 #gentle push
+imagedelta_weight = 0.015 #gentle push
 learning_rate = 5.0
 lost_penalty = 1.0
 #helper functions
