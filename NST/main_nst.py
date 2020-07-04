@@ -63,11 +63,11 @@ fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
 total_iterations = 300
-content_weight = 0.8
-style_weight = 0.8
-imagedelta_weight = 0.2
-learning_rate = 20.0
-lost_penalty = 0.01
+content_weight = 0.3
+style_weight = 2
+imagedelta_weight = 0.1 #gentle push
+learning_rate = 5.0
+lost_penalty = 1.0
 #helper functions
 
 def fullcon_internal(W,b,layer,keep_prob):
