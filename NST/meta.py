@@ -64,7 +64,7 @@ with tf.Session(config = config) as sess:
             img = sess.run(clipper)
             #plt.imshow(img[0])
             #plt.show()
-            if(ls<= bench_val):
+            if(ls<= bench_val and ls >= 0.1 * bench_val):
                 arr_noisy.append(img[0])
                 labels.append(1)
             elif(ls <= 2 *bench_val and ls >= 1.1 * bench_val):
@@ -83,10 +83,10 @@ with tf.Session(config = config) as sess:
             img2 = sess.run(clipper2)
             #plt.imshow(img[0])
             #plt.show()
-            if(ls2 <= bench_val2):
+            if(ls2 <= bench_val2 and ls2 >= 0.1 * bench_val2):
                 arr_noisy.append(img2[0])
                 labels.append(0)
-            elif(ls <= 2 *bench_val2 and ls >= 1.1 * bench_val2):
+            elif(ls2 <= 2 *bench_val2 and ls2 >= 1.1 * bench_val2):
                 arr_noisy.append(img2[0])
                 labels.append(2)
         #if(i%20 == 0):

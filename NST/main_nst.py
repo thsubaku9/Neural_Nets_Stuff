@@ -27,7 +27,7 @@ def image_loss(Img,base_img):
     
 #create content loss
 def content_loss(content_activation, generated_activation):
-    return tf.reduce_mean(tf.square(tf.subtract(content_activation,generated_activation)/generated_activation.shape[1].value))
+    return tf.reduce_mean(tf.abs(tf.subtract(content_activation,generated_activation)/generated_activation.shape[1].value))
 
 #create style loss
 def gram_matrix(convoluted_layer):
@@ -41,7 +41,7 @@ def style_loss(style_layer, generated_layer):
     _,h,w,c = generated_layer.get_shape().as_list()
     gram_style = gram_matrix(style_layer)
     gram_gen = gram_matrix(generated_layer) 
-    return tf.reduce_mean(tf.square(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
+    return tf.reduce_mean(tf.abs(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
 
 #create Initial image
 GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), minval = 0, maxval = 255,dtype = tf.float32), dtype = tf.float32, shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), name = "GeneratedImg")
@@ -64,10 +64,10 @@ fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier
 
 total_iterations = 300
 content_weight = 0.8
-style_weight = 0.5
+style_weight = 0.8
 imagedelta_weight = 0.2
 learning_rate = 20.0
-lost_penalty = 0.001
+lost_penalty = 0.01
 #helper functions
 
 def fullcon_internal(W,b,layer,keep_prob):
