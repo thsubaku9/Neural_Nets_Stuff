@@ -6,7 +6,7 @@ import os
 
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
-        self.learn_rate = 0.1
+        self.learn_rate = 0.5
         self.Img = X
         self.Label = Y
         self.totalClasses = totalClasses
@@ -66,11 +66,11 @@ class miniClassifier():
             }
 
         biases = {
-            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_1'),
-            'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_2'),
-            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_1'),
-            'b2_2': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_2'),
-            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 0.8, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b3_1'),            
+            'b1_1': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_1'),
+            'b1_2': tf.Variable(initial_value = tf.random.normal(shape = (6,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (6,), name = 'b1_2'),
+            'b2_1': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_1'),
+            'b2_2': tf.Variable(initial_value = tf.random.normal(shape = (12,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (12,), name = 'b2_2'),
+            'b3_1': tf.Variable(initial_value = tf.random.normal(shape = (8,), mean = 0.0, stddev = 1, dtype = tf.float32), dtype = tf.float32,shape = (8,), name = 'b3_1'),            
             }
 
         self.weights = weights; self.biases = biases;
@@ -92,8 +92,10 @@ class miniClassifier():
 
         self.fc2 = self.fullcon(self.relu1,"fc2",self.preOutputSize,self.preOutputSize//2 , keep_prob = 0.8)
         self.sig1 = tf.nn.sigmoid(self.fc2 , name = "content_layer")
-        self.fc3 = self.fullcon(self.sig1,"fc3",self.preOutputSize//2,self.totalClasses,keep_prob = 1.0)
-        self.classifierOutput = tf.nn.softmax(self.fc3,name = "result")
+        self.fc3 = self.fullcon(self.sig1,"fc3",self.preOutputSize//2,self.preOutputSize//4,keep_prob = 1.0)
+        self.sig2 = tf.nn.sigmoid(self.fc3 , name = "content_layer2")
+        self.fc4 = self.fullcon(self.sig2,"fc4",self.preOutputSize//4,self.totalClasses,keep_prob = 1.0)        
+        self.classifierOutput = tf.nn.softmax(self.fc4,name = "result")
 
         return self.classifierOutput
 

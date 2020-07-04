@@ -34,17 +34,17 @@ def gram_matrix(convoluted_layer):
     #you can either transpose a or b, but ultimately you're optimizing loss on the sum difference
     channels = convoluted_layer.shape[-1]
     flat = tf.reshape(convoluted_layer,[-1,channels])
-    gramMat = tf.matmul(flat,flat,transpose_b = True)    
+    gramMat = tf.matmul(flat,flat,transpose_a = True)    
     return gramMat    
 
 def style_loss(style_layer, generated_layer):     
     _,h,w,c = generated_layer.get_shape().as_list()
     gram_style = gram_matrix(style_layer)
     gram_gen = gram_matrix(generated_layer) 
-    return tf.reduce_mean(tf.abs(tf.subtract(gram_style,gram_gen))/((h*w*c)**2))
+    return tf.reduce_mean(tf.abs(tf.square(gram_style,gram_gen))/((h*w*c)**2))
 
 #create Initial image
-GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), minval = 0, maxval = 1,dtype = tf.float32), dtype = tf.float32, shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), name = "GeneratedImg")
+GenImg = tf.Variable(initial_value = tf.random.uniform(shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), minval = 0, maxval = 255,dtype = tf.float32), dtype = tf.float32, shape = (1,meta.shapeImg[0],meta.shapeImg[1],meta.shapeImg[2]), name = "GeneratedImg")
 
 #load the frozen network and create graph
 nst_w1_1 = tf.constant(value = classifier.retrieveLayers["w1_1"], shape = classifier.retrieveLayers["w1_1"].shape, dtype = tf.float32)
@@ -63,11 +63,11 @@ fc2w = tf.constant(value = classifier.retrieveLayers["fc2w"], shape = classifier
 fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier.retrieveLayers["fc2b"].shape, dtype = tf.float32)
 
 total_iterations = 300
-content_weight = 0.4
-style_weight = 0.3
-imagedelta_weight = 0.5
-learning_rate = 200.0
-lost_penalty = 0.0000001
+content_weight = 0.8
+style_weight = 0.5
+imagedelta_weight = 0.2
+learning_rate = 20.0
+lost_penalty = 0.001
 #helper functions
 
 def fullcon_internal(W,b,layer,keep_prob):
@@ -112,7 +112,7 @@ with tf.Session(config = config) as sess:
         #add independent loss section
         curr_loss = sess.run(loss_cost)
         sess.run(optimizer)
-        clipper = tf.clip_by_value(GenImg,0.0,1.0)
+        clipper = tf.clip_by_value(GenImg,0.0,255.0)
         GenImg.assign(clipper)
         img = sess.run(clipper)
         if(i%10 == 0 and i>0):
@@ -120,10 +120,8 @@ with tf.Session(config = config) as sess:
             print(curr_loss)
             learning_rate *= 2.1
             lost_penalty *= 5 
-            plt.imshow(img[0])
+            plt.imshow(np.int16(img[0]))
             plt.show()
             
-    plt.imshow(img[0])
-    plt.show()
 
 #done
