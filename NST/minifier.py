@@ -2,6 +2,7 @@
 
 import tensorflow as tf
 import numpy as np
+import os
 
 class miniClassifier():
     def __init__(self, X, Y, totalClasses = 2, preOutput = 2000):
@@ -125,7 +126,7 @@ class miniClassifier():
         
     def compile(self,iters = 150,batches = None):
         startingAcc = 0
-        currentAcc = 0        
+        currentAcc = 0
         for it in range(iters):
             if(batches == None):
                 batch_x = self.Img
@@ -151,7 +152,7 @@ class miniClassifier():
         print("Loss= {:.5f} , Training Acc = {:.5f}".format(loss,acc))
         return acc
 
-    def oneshot_save(self, startingAcc, currentAcc):
+    def oneshot_save(self, startingAcc, currentAcc, default_save = False, saveThresh = 0.8):
         if (startingAcc < currentAcc) :
             #print("current: {} lowest: {}\n".format(currentLoss, lowestLoss))
             
@@ -176,25 +177,29 @@ class miniClassifier():
             self.retrieveLayers['fc2b'] = self.sess.run(self.biases['fc2'])
             
             print('Value saved\n')
-            #self.save_model()            
+            if(currentAcc>saveThresh and default_save):
+                self.save_model()
             return True
         
         else:            
             return False
-            
-    def save_model(self,_path = "/tmp/model.ckpt"):
-        saver = tf.train.Saver()
-        self.save_path = saver.save(self.sess, _path)
 
-    def load_model(self,component_name, component_shape, _path = "/tmp/model.ckpt"):
-        
-        retrieved_component = tf.get_variable(component_name ,shape = component_shape)                    
-        #get_variable to be utilized before trying to attempt below portion#
+    def check_old_model(self,path):
+        ckpt= tf.train.get_checkpoint_state(os.path.dirname(path))
+        if ckpt and ckpt.model_checkpoint_path:
+            return ckpt
+        else:
+            return False
+    
+    def save_model(self,_path = "./checkpoints/model.ckpt"):
         saver = tf.train.Saver()
-        saver.restore(self.sess, "/tmp/model.ckpt")
+        self.save_path = saver.save(self.sess, _path, meta_graph_suffix='meta', write_meta_graph=True, write_state=True)
 
-        return retrieved_component
-        
+    def load_model(self, _path = "./checkpoints/checkpoint"):
+        ckpt = self.check_old_model(_path)
+        if(ckpt):
+            saver.restore(self.sess, ckpt.model_checkpoint_path)
+                
 #HIDE this before release
 '''
 import meta
