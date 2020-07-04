@@ -65,9 +65,9 @@ fc2b = tf.constant(value = classifier.retrieveLayers["fc2b"], shape = classifier
 total_iterations = 300
 content_weight = 0.4
 style_weight = 0.3
-imagedelta_weight = 1.0
+imagedelta_weight = 0.5
 learning_rate = 200.0
-lost_penalty = 0.000001
+lost_penalty = 0.0000001
 #helper functions
 
 def fullcon_internal(W,b,layer,keep_prob):
@@ -115,11 +115,11 @@ with tf.Session(config = config) as sess:
         clipper = tf.clip_by_value(GenImg,0.0,1.0)
         GenImg.assign(clipper)
         img = sess.run(clipper)
-        if(i%10 == 0):
+        if(i%10 == 0 and i>0):
             #add an exp gain for learning rate ?
             print(curr_loss)
             learning_rate *= 2.1
-            lost_penalty *= 2 
+            lost_penalty *= 5 
             plt.imshow(img[0])
             plt.show()
             
